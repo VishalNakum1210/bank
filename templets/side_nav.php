@@ -36,7 +36,7 @@
 
                 <ul class="menu-links">
                     <li class="nav-link">
-                        <a href="#">
+                        <a href="index.php">
                             <i class='bx bx-home-alt icon' ></i>
                             <span class="text nav-text">Dashboard</span>
                         </a>
@@ -66,7 +66,7 @@
                     <li class="nav-link">
                         <a href="history.php">
                         <i class='bx bx-history icon'></i>
-                            <span class="text nav-text">Wallets</span>
+                            <span class="text nav-text">History</span>
                         </a>
                     </li>
 
@@ -93,21 +93,21 @@
     </nav>
     <script>
         const body = document.querySelector('body'),
-      sidebar = body.querySelector('nav'),
-      toggle = body.querySelector(".toggle"),
-      searchBtn = body.querySelector(".search-box"),
-      modeSwitch = body.querySelector(".toggle-switch"),
-      modeText = body.querySelector(".mode-text");
+              sidebar = body.querySelector('nav.sidebar'),
+              toggle = body.querySelector(".toggle"),
+              searchBtn = body.querySelector(".search-box");
 
+        if (toggle && sidebar) {
+            toggle.addEventListener("click" , () =>{
+                sidebar.classList.toggle("close");
+            });
+        }
 
-toggle.addEventListener("click" , () =>{
-    sidebar.classList.toggle("close");
-})
-
-searchBtn.addEventListener("click" , () =>{
-    sidebar.classList.remove("close");
-})
-
+        if (searchBtn && sidebar) {
+            searchBtn.addEventListener("click" , () =>{
+                sidebar.classList.remove("close");
+            });
+        }
     </script>
 
 </body>

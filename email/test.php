@@ -1,12 +1,16 @@
 <?php
 
-function mail_sender($email,$title,$desc){
+// Email sending is disabled to prevent SMTP connection errors.
+function mail_sender($email, $title, $desc){
+	/*
 	include('smtp/PHPMailerAutoload.php');
-
-	echo smtp_mailer($email,$title,$desc);
+	echo smtp_mailer($email, $title, $desc);
+	*/
+	return true;
 }
 
-function smtp_mailer($to,$subject, $msg){
+function smtp_mailer($to, $subject, $msg){
+	/*
 	$mail = new PHPMailer(); 
 	$mail->IsSMTP(); 
 	$mail->SMTPAuth = true; 
@@ -30,5 +34,7 @@ function smtp_mailer($to,$subject, $msg){
 	if(!$mail->Send()){
 		echo $mail->ErrorInfo;
 	}
+	*/
+	return true;
 }
 ?>

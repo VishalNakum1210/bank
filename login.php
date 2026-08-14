@@ -7,20 +7,23 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="style/login.css">
+    <link href='https://unpkg.com/boxicons@2.1.1/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="style/login.css?v=2">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Login - NNP Bank</title>
 </head>
 <body>
 
     <?php
-        function error_display($error, $color="red"){
-            echo '<div style="background_color: '.$color.';" class="error_noti">
-                <i class="bx bx-error"></i>
+        function error_display($error, $color = "red"){
+            $bg_color = ($color == "green" || $color == "#16a34a" || $color == "#10b981") ? "#16a34a" : (($color == "red" || $color == "#e11d48") ? "#e11d48" : $color);
+            $icon = ($bg_color == "#16a34a") ? "bx-check-circle" : "bx-error";
+            echo '<div style="background-color: '.$bg_color.';" class="error_noti">
+                <i class="bx '.$icon.'"></i>
                 <span>
                     '.$error.'  
                 </span>
-                <i class="bx bx-x icon2"></i>
+                <i class="bx bx-x icon2" onclick="this.parentElement.remove();"></i>
             </div>';
         }
         if(isset($_POST['username'])){

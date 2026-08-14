@@ -1,302 +1,639 @@
-@import url('https://fonts.googleapis.com/css2?family=Dosis:wght@200..800&family=Inclusive+Sans:ital@0;1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inclusive+Sans:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
-*{
+* {
     margin: 0;
     padding: 0;
-    font-family: "Inclusive Sans", sans-serif;
-    -webkit-user-select: none; /* Safari */
-    -ms-user-select: none; /* IE 10 and IE 11 */
-    user-select: none; /* Standard syntax */
+    box-sizing: border-box;
+    font-family: "Plus Jakarta Sans", "Inclusive Sans", sans-serif;
+    -webkit-user-select: none;
+    user-select: none;
 }
-.main{
-    height: 729px;
-    /* background-color: aqua; */
-    color: #fff;
-    position: relative;
-    left: 88px;
-    width: 1448px;
+
+html, body {
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    max-height: 100vh;
+    overflow: hidden;
+    background-color: #121316;
+    color: #ffffff;
 }
-.not{
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+
+/* Main Dashboard Grid Container fitting 100vh and 100vw with proper Navbar offset */
+.dashboard-container {
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    max-height: 100vh;
+    display: grid;
+    grid-template-columns: 340px minmax(500px, 1fr);
+    gap: 32px;
+    padding: 24px 36px 24px calc(88px + 36px);
+    box-sizing: border-box;
     align-items: center;
-    background-color: #242526;
-    position: absolute;
-    right: 10px;
-    margin: 20px;
-    bottom: 10px;
+    overflow: hidden;
+    transition: padding-left 0.5s ease;
 }
-.detail{
-    margin: 10px;
-}
-.text_name{
-    margin: 10px;
-    color: #a8a8a8;
-    font-size: 15px;
-}
-.text_email{
-    margin: 10px;
-    color: #a8a8a8;
-    font-size: 15px;
-}
-.holder_name{
-    margin: 10px;
-    font-size: 20px;
-    font-weight: 900;
-}
-.holder_email{
-    margin: 10px;
-    font-size: 20px;
-    font-weight: 900;
-}
-.mobile_fram{
+
+/* ==========================================================================
+   LEFT COLUMN: MOBILE APPLICATION MOCKUP (Fits within 100vh)
+   ========================================================================== */
+.mobile_fram {
     position: relative;
+    width: 340px;
+    height: calc(100vh - 48px);
+    max-height: 640px;
+    border-radius: 44px;
+    background: #1e2025;
+    padding: 10px;
+    box-shadow: 
+        0 25px 60px rgba(0, 0, 0, 0.65),
+        0 10px 20px rgba(0, 0, 0, 0.4),
+        inset 0 0 1px 2px rgba(255, 255, 255, 0.12);
     display: flex;
     justify-content: center;
     align-items: center;
-    top: 50px;
-    left: 200px;
-    height: 650px;
-    width: 350px;
-    border-radius: 40px;
-    background-color: #242526;
-    
+    flex-shrink: 0;
 }
-.mobile_display{
-    height: 630px;
-    width: 330px;
-    border-radius: 35px;
-    background: black;
+
+.mobile_display {
+    height: 100%;
+    width: 100%;
+    border-radius: 36px;
+    background: #090a0c;
     overflow: hidden;
     display: flex;
-    align-items: center;
     flex-direction: column;
+    position: relative;
+    padding-bottom: 20px;
+    box-sizing: border-box;
 }
-.land{
+
+/* Phone Status Bar */
+.land {
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    color: black;
+    color: #ffffff;
     width: 100%;
-    height: 30px;
-    background-color: #ffffff;
-}
-#symbol{
-    margin-right: 20px;
-    height: 15px;
-    width: 85px;
-}
-.date{
-    margin-left: 20px;
-}
-.back{
-    position: absolute;
-    bottom: 12px;
-    left: 50%;
-    height: 5px;
-    transform: translate(-50%);
-    width: 100px;
-    background-color: #fff;
-}
-.card{
-    margin-top: 20px;
-    height: 150px;
-    width: 300px;
-    border-radius: 20px;
-    background: #242526;
-}
-.first_line{
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin: 10px;
-}
-#visa{
-    height: 30px;
-}
-#bank_name{
-    position: relative;
-    top: -5px;
-    font-size: 15px;
-    font-weight: 800;
-}
-.amount_details{
-    margin: 10px;
-    margin-top: 15px;
-}
-#total_amount{
-    font-size: 20px;
-    font-weight: 900;
-}
-.last_line{
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin: 10px;
-    margin-top: 20px;
-}
-#chip{
-    height: 30px;
-}
-#user_name{
-    font-size: 15px;
-    font-weight: 900;
-    position: relative;
-    top: 5px;
-}
-.header{
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-top: 10px;
-    height: 50px;
-    width: 300px;
-    font-weight: 900;
-    font-size: 15px;
-}
-.history{
-    display: flex;
-    flex-direction: column;
-    height: 380px;
-    width: 300px;
-    margin: 20px;
-    margin-top: 10px;
-}
-.history_line{
-    display: flex;
-    align-items: center;
-    background-color: #242526;
-    height: 50px;
-    width: 300px;
-    border-radius: 30px;
-    margin-bottom: 10px;
-}
-#suc{
-    height: 40px;
-    margin: 5px;
-}
-#payment_status{
-    font-size: 20px;
-    font-weight: 900;
-}
-#amount{
-    font-weight: 900;
-    position: absolute;
-    right: 40px;
+    height: 36px;
+    padding: 0 18px;
+    background: transparent;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
 }
 
-/* demo card */
-.order_page{
+.date {
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+#symbol {
+    height: 12px;
+    width: auto;
+    filter: brightness(0) invert(1);
+    opacity: 0.85;
+}
+
+/* Phone Screen: Mini Debit Card */
+.card {
+    margin: 8px 16px 14px 16px;
+    height: 155px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    padding: 16px;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.card::before {
+    content: '';
     position: absolute;
-    top: 70px;
-    right: 70px;
-    height: 500px;
-    width: 500px;
-    border-radius: 20px;
-    background-color: #242526;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.25), transparent 60%);
+    pointer-events: none;
 }
-.card2{
-    margin-top: 20px;
-    /* position: absolute;
-    top: 100px; */
-    height: 250px;
-    width: 450px;
-    background-color: black;
-    background-image: url(/bank/pic/bg6.jpg);
-    background-size: cover;
-    border-radius: 20px;
-}
-.pic_line{
-    display: flex;
-    margin: 20px;
-    justify-content: space-between;
-}
-.pic{
-    height: 40px;
-}
-.number_line{
-    display: flex;
-    margin: 20px;
-    margin-top: 50px;
-    margin-bottom: 10px;
-    justify-content: space-between;
-}
-#number{
-    font-size: 25px;
-    font-weight: 900;
-}
-.name_line{
-    position: relative;
-    top: -10px;
-    margin: 20px;
-    font-weight: 700;
-    font-size: 20px;
-    margin-bottom: none;
-}
-.last{
-    position: relative;
-    top: -15px;
-    margin: 20px;
-    margin-top: 0px;
+
+.first_line {
     display: flex;
     justify-content: space-between;
-}
-.logo{
-    height: 60px;
+    align-items: center;
     position: relative;
-    top: -8px;
-    left: 10px;
+    z-index: 2;
 }
-.sen{
-    margin: 20px;
-    font-size: 20px;
-    font-weight: 700;
+
+#bank_name {
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: #f8fafc;
+    text-transform: uppercase;
 }
-#cut_number{
+
+#visa {
+    height: 20px;
+    filter: brightness(0) invert(1);
+}
+
+.amount_details {
+    position: relative;
+    z-index: 2;
     font-size: 15px;
+    font-weight: 600;
+    color: #94a3b8;
+}
+
+#total_amount {
+    font-size: 22px;
+    font-weight: 800;
+    color: #ffffff;
+    margin-left: 2px;
+    letter-spacing: -0.5px;
+}
+
+.last_line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    z-index: 2;
+}
+
+#user_name {
+    font-size: 12px;
+    font-weight: 700;
+    color: #cbd5e1;
+    text-transform: capitalize;
+}
+
+#chip {
+    height: 24px;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+}
+
+/* Phone Screen: Transaction History Section */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 18px 8px 18px;
+    font-weight: 700;
+    font-size: 13px;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    flex-shrink: 0;
+}
+
+.history {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0 16px;
+    flex: 1;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+.history::-webkit-scrollbar {
+    width: 4px;
+}
+
+.history::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+}
+
+.history_line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #14161a;
+    padding: 10px 14px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    transition: background 0.2s ease;
+}
+
+.history_line:hover {
+    background: #1c1e24;
+}
+
+.history_left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#suc {
+    height: 28px;
+    width: 28px;
+    border-radius: 50%;
+}
+
+#payment_status {
+    font-size: 13px;
+    font-weight: 700;
+    color: #f1f5f9;
+}
+
+#amount {
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.2px;
+}
+
+/* Phone Screen: Home Bar */
+.back {
+    position: absolute;
+    bottom: 6px;
+    left: 50%;
+    height: 4px;
+    transform: translateX(-50%);
+    width: 100px;
+    background-color: rgba(255, 255, 255, 0.4);
+    border-radius: 4px;
+}
+
+/* ==========================================================================
+   RIGHT COLUMN: DESKTOP CONTROL CARDS & SHOWCASE
+   ========================================================================== */
+.right-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    height: calc(100vh - 48px);
+    max-height: 640px;
+    justify-content: space-between;
+}
+
+/* Top User Header Card */
+.user-welcome-card {
+    background: #1a1c22;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 24px;
+    padding: 22px 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    flex-shrink: 0;
+}
+
+.welcome-info h2 {
+    font-size: 22px;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+}
+
+.welcome-info p {
+    font-size: 13px;
+    color: #94a3b8;
     font-weight: 500;
 }
-#order_button{
-    position: absolute;
-    bottom: 20px;
-    left: 25px;
-    border: none;
+
+.user-quick-stats {
+    display: flex;
+    gap: 16px;
+}
+
+.quick-stat-badge {
+    background: #121316;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 10px 18px;
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.quick-stat-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+}
+
+.quick-stat-val {
     font-size: 15px;
-    font-weight: 900;
-    width: 450px;
-    height: 40px;
-    background-color: #000;
-    color: #fff;
-}
-.alredy{
-    font-size: 30px;
     font-weight: 800;
-    margin: 40px;
-    margin-top: 70px;
-    margin-bottom: 20px;
+    color: #f8fafc;
 }
-#order_success{
-    height: 70px;
+
+/* Main Showcase & Order Card */
+.order_page {
+    background: #1a1c22;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 24px;
+    padding: 26px 30px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+    flex: 1;
 }
-.error_noti{
+
+/* Physical ATM Card on Right Side with High-Depth 3D Shadow */
+.card2 {
+    position: relative;
+    height: 230px;
+    width: 370px;
+    max-width: 100%;
+    color: #ffffff;
+    background: url('../pic/bg6.jpg') center/cover, #111111 !important;
+    border-radius: 20px;
+    padding: 24px;
+    box-sizing: border-box;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex-shrink: 0;
+    box-shadow: 
+        0 20px 45px -8px rgba(0, 0, 0, 0.75),
+        0 30px 60px -15px rgba(0, 0, 0, 0.5),
+        0 10px 20px -5px rgba(0, 0, 0, 0.35),
+        inset 0 1px 2px rgba(255, 255, 255, 0.35),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.card2::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.04) 40%, rgba(0, 0, 0, 0.25) 100%);
+    pointer-events: none;
+    border-radius: 20px;
+}
+
+.pic_line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+}
+
+.pic {
+    height: 36px;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+}
+
+.pic_line img[src*="visa"] {
+    height: 24px;
+    filter: brightness(0) invert(1) drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+}
+
+.number_line {
     display: flex;
     align-items: center;
-    justify-content: center;
-    margin-left: 89px;
-    position: fixed;
-    top: 1px;
-    width: 100%;
-    height: 40px;
-    color: #fff;
-    font-size: 20px;
-    background-color: red;
+    justify-content: space-between;
+    position: relative;
+    z-index: 2;
+    margin: 4px 0;
 }
-.icon2{
+
+#number {
+    font-family: 'Courier New', Courier, monospace, "Inclusive Sans", sans-serif;
+    font-size: 21px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9), 0 0 2px rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+}
+
+.wifi-icon {
+    height: 20px;
+    filter: brightness(0) invert(1) drop-shadow(0 1px 3px rgba(0,0,0,0.5));
+}
+
+.name_line {
+    font-size: 15px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    position: relative;
+    z-index: 2;
+    color: #f1f5f9;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.last {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    position: relative;
+    z-index: 2;
+}
+
+.valid_box {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    line-height: 1.3;
+    color: #e2e8f0;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+}
+
+.valid_box span {
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.logo {
+    height: 42px;
+    filter: drop-shadow(0 2px 5px rgba(0,0,0,0.5));
+}
+
+/* Order Controls / Status Column */
+.order-info-col {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex: 1;
+    padding-left: 8px;
+}
+
+.sen {
+    font-size: 20px;
+    font-weight: 800;
+    color: #f8fafc;
+    line-height: 1.35;
+    margin-bottom: 12px;
+}
+
+.price-tag {
+    font-size: 16px;
+    font-weight: 700;
+    color: #94a3b8;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#cut_number {
+    text-decoration: line-through;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.special-price {
+    color: #10b981;
+    font-size: 20px;
+    font-weight: 800;
+}
+
+#order_button {
+    border: none;
+    font-size: 15px;
+    font-weight: 700;
+    width: 100%;
+    max-width: 280px;
+    height: 46px;
+    background: #2563eb;
+    color: #ffffff;
+    border-radius: 12px;
     cursor: pointer;
-    margin-right: 20px;
+    transition: all 0.25s ease;
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+}
+
+#order_button:hover {
+    background: #1d4ed8;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(37, 99, 235, 0.55);
+}
+
+/* Already Ordered State */
+.already-ordered-box {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    padding: 18px 22px;
+    border-radius: 18px;
+}
+
+.already-ordered-box img {
+    height: 48px;
+    width: 48px;
+}
+
+.already-text h3 {
+    font-size: 17px;
+    font-weight: 800;
+    color: #10b981;
+    margin-bottom: 4px;
+}
+
+.already-text p {
+    font-size: 13px;
+    color: #94a3b8;
+}
+
+/* Bottom Account Details Banner */
+.not {
+    background: #1a1c22;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 20px;
+    padding: 16px 26px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.not .detail {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.text_name, .text_email {
+    font-size: 12px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+}
+
+.holder_name, .holder_email {
+    font-size: 14px;
+    font-weight: 700;
+    color: #f1f5f9;
+}
+
+/* Toast/Error Notification */
+.error_noti {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    min-width: 320px;
+    max-width: 450px;
+    padding: 14px 20px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 600;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    z-index: 99999;
+    animation: toastSlideIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.error_noti i.bx-error,
+.error_noti i.bx-check-circle {
+    font-size: 22px;
+    flex-shrink: 0;
+}
+
+.error_noti span {
+    flex-grow: 1;
+    line-height: 1.4;
+}
+
+.error_noti .icon2 {
+    font-size: 20px;
+    cursor: pointer;
+    opacity: 0.85;
+    transition: opacity 0.2s, transform 0.2s;
+    flex-shrink: 0;
+    margin-left: 8px;
+}
+
+.error_noti .icon2:hover {
+    opacity: 1;
+    transform: scale(1.15);
+}
+
+@keyframes toastSlideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 }

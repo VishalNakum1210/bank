@@ -12,6 +12,8 @@ body{
     color: #fff;
     height: 100vh;
     background-color: gray;
+    padding-left: 88px;
+    box-sizing: border-box;
 }
 .card{
     height: 250px;

@@ -12,6 +12,8 @@ body{
     color: #fff;
     height: 100vh;
     background-color: gray;
+    padding-left: 88px;
+    box-sizing: border-box;
 }
 .card1{
     display: flex;
@@ -21,7 +23,7 @@ body{
     width: 450px;
     color: black;
     background-color: #fff;
-    border-radius: 20px;
+    border-radius: 25px;
     transition: all .5s;
 }
 .card2{
@@ -81,6 +83,7 @@ body{
 .card1:hover{
     height: 400px;
     width: 500px;
+    background-color: #fff;
 }
 .card1:hover .card2{
     position: relative;
@@ -104,11 +107,9 @@ input{
     font-size: 15px;
     font-weight: 700;
     border: 3px solid black;
-    /* border-radius: 20px; */
 }
 #back{
     position: relative;
-    /* top: -30px; */
     left: 150px;
     height: 40px;
     width: 90px;
@@ -136,15 +137,59 @@ input{
 .card1:hover #line_input{
     top: -10px;
 }
-.error_noti{
+/* Toast/Error Notification */
+.error_noti {
     position: fixed;
-    top: 1px;
-    width: 100%;
-    height: 40px;
+    top: 24px;
+    right: 24px;
+    min-width: 320px;
+    max-width: 450px;
+    padding: 14px 20px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    color: #fff;
+    gap: 12px;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 600;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    z-index: 99999;
+    animation: toastSlideIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.error_noti i.bx-error,
+.error_noti i.bx-check-circle {
+    font-size: 22px;
+    flex-shrink: 0;
+}
+
+.error_noti span {
+    flex-grow: 1;
+    line-height: 1.4;
+}
+
+.error_noti .icon2 {
     font-size: 20px;
-    background-color: red;
+    cursor: pointer;
+    opacity: 0.85;
+    transition: opacity 0.2s, transform 0.2s;
+    flex-shrink: 0;
+    margin-left: 8px;
+}
+
+.error_noti .icon2:hover {
+    opacity: 1;
+    transform: scale(1.15);
+}
+
+@keyframes toastSlideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 }
