@@ -1,15 +1,14 @@
 <?php
     session_start();
     include "templets/_dbconnect.php";
-    include "templets/internet_connection.php";
     // include "email/test.php";
-    if(!isset($_SESSION["login"])){
+    if(!isset($_SESSION['login'])){
         header("location: login.php");
         exit();
     }
     else{
-        $username = $_SESSION['username'];
         $id = $_SESSION['id'];
+        $username = $_SESSION['username'];
     }
 ?>
 
@@ -20,15 +19,19 @@
     <link rel="icon" type="image/png" href="pic/logo.png">
     <link rel="shortcut icon" href="pic/logo.png" type="image/png">
     <link href='https://unpkg.com/boxicons@2.1.1/css/boxicons.min.css' rel='stylesheet'>
-    <link rel="stylesheet" href="style/add_money.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="style/withdraw.css?v=<?php echo time(); ?>">
     <link rel="stylesheet" href="style/side_nav.css?v=<?php echo time(); ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Money - NNP Bank</title>
+    <title>Withdraw Money - NNP Bank</title>
 </head>
 <body>
-    <?php include "templets/side_nav.php"; ?>
+<?php include "templets/side_nav.php"; ?>
 
-    <?php
+<?php
+
+    if(isset($_POST['amount']) || isset($_POST['Pin'])){
+
+        #error function
         function error_display($error, $color = "red"){
             $bg_color = ($color == "green" || $color == "#16a34a" || $color == "#10b981") ? "#16a34a" : (($color == "red" || $color == "#e11d48") ? "#e11d48" : $color);
             $icon = ($bg_color == "#16a34a") ? "bx-check-circle" : "bx-error";
@@ -41,60 +44,104 @@
             </div>';
         }
 
-        if(isset($_POST['amount'])){
+        #cut money from account
+        class withd{
 
-            #send email (commented out)
-            /*
-            function send_mail($amount){
-                $user_email = $_SESSION['email'];
-                $title = "Credited Money";
-                $desc = "Your A/C can be Credited with Rs".$amount;
-
-                mail_sender( $user_email, $title, $desc);
-            }
-            */
-
-            #check
-            function check($new_amount){
-                if($new_amount > 0){
-                    add($new_amount);
-                }
-                else{
-                    $error =  "invalid amount";
-                    error_display($error, "red");
-                }
-            }
-
-            #add money
-            function add($new_amount){
+            #user account
+            function user_account($money){
                 global $conn, $id;
+                $check_amount = "SELECT * FROM `money_bank` WHERE `account_id` = '$id';";
+                $amount_result = mysqli_query($conn, $check_amount);
+                $amount_row = mysqli_num_rows($amount_result);
+
+                if($amount_row == 1){
+                    while($row = mysqli_fetch_assoc($amount_result)){
+                        $ori_money = $row['amount'];
+                    }
+                    $add_amount = $ori_money - $money;
+                    $add_money_sql = "UPDATE `money_bank` SET `amount`='$add_amount' WHERE `account_id` = '$id';";
+                    $result_add_money = mysqli_query($conn, $add_money_sql);
+                }
+            }
+
+        }
+
+        #check pin
+        function check($pin, $money){
+            global $conn, $id;
+
+            if($money > 0 ){
+                #to store money
                 $store_money = "SELECT * FROM `money_bank` WHERE `account_id` = '$id';";
                 $result_money = mysqli_query($conn, $store_money);
                 $money_row = mysqli_num_rows($result_money);
+                $ori_money = 0;
 
                 if($money_row == 1){
                     while($row = mysqli_fetch_assoc($result_money)){
-                        $money = $row['amount'];
+                        $ori_money = (float)$row['amount'];
                     }
                 }
-                $add_amount = $money + $new_amount;
-                $add_money_sql = "UPDATE `money_bank` SET `amount`='$add_amount' WHERE `account_id` = '$id';";
-                $result_add_money = mysqli_query($conn, $add_money_sql);
-                // send_mail($new_amount);
 
-                #entey in history
-                $date = date('Y-m-d H:i:s');
-                $entery = "INSERT INTO `history`(`account_id`, `paymant_status`, `desc`, `time`, `amount`) VALUES ('$id','Credited','Added Money','$date','$new_amount');";
-                $result_entery = mysqli_query($conn, $entery);
+                $chech_pin = "SELECT * FROM `account_details` WHERE `account_id` = '$id';";
+                $result_pin = mysqli_query($conn, $chech_pin);
+                $pin_row = mysqli_num_rows($result_pin);
 
-                $error = "Money added to your account successfully";
-                error_display($error, "green");
+                if($pin_row == 1){
+                    while($row = mysqli_fetch_assoc($result_pin)){
+                        if(trim($pin) == trim($row['pin'])){
+                            if($money <= $ori_money){
+                                $temp = new withd();
+
+                                $temp->user_account($money);
+
+                                #send email (commented out)
+                                /*
+                                $user_email = $_SESSION["email"] ?? '';
+                                if(!empty($user_email)){
+                                    $title = "Debited Money";
+                                    $desc = "Your A/C can be Debited with Rs ".$money;
+                                    mail_sender($user_email, $title, $desc);
+                                }
+                                */
+
+                                #entey in history
+                                $date = date('Y-m-d H:i:s');
+                                $entery = "INSERT INTO `history`(`account_id`, `paymant_status`, `desc`, `time`, `amount`) VALUES ('$id','Debited','Withdrawal Money','$date','$money');";
+                                $result_entery = mysqli_query($conn, $entery);
+                                $error = "Withdraw successfully";
+                                error_display($error, "green");
+                            }
+                            else{
+                                $error = "not have that much amount in account";
+                                error_display($error);
+                            }
+                        }
+                        else{
+                            $error = "wrong pin";
+                            error_display($error);
+                        }
+                    }
+                }
+                else {
+                    $error = "Account details not found";
+                    error_display($error, "red");
+                }
             }
-
-            $new_amount = $_POST['amount'];
-            check($new_amount);
+            else{
+                $error = "Invalid Amount";
+                error_display($error, "red");
+            }
         }
-    ?>
+
+        #main section
+        $pin = $_POST['Pin'];
+        $money = $_POST['amount'];
+
+        check($pin, $money);
+
+    }
+?>
 
     <div class="card1">
         <div class="card-column">
@@ -148,14 +195,21 @@
 
         <div class="input_line">
             <div class="title_line">
-                <p>Add Money</p>
+                <p>Withdraw Money</p>
             </div>
 
-            <form action="add_money.php" method="post">
+            <form action="withdraw.php" method="post">
                 <div class="line1">
                     <span>
                         <p class="text">Amount</p>
-                        <input type="number" placeholder="Enter amount to add" name="amount" required>
+                        <input type="number" placeholder="Enter amount to withdraw" name="amount" required>
+                    </span>
+                </div>
+
+                <div class="line1">
+                    <span>
+                        <p class="text">Pin</p>
+                        <input type="password" placeholder="Enter 4-digit PIN" name="Pin" required>
                     </span>
                 </div>
 

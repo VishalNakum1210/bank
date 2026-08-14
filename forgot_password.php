@@ -9,8 +9,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="pic/logo.png">
+    <link rel="shortcut icon" href="pic/logo.png" type="image/png">
     <link href='https://unpkg.com/boxicons@2.1.1/css/boxicons.min.css' rel='stylesheet'>
-    <link rel="stylesheet" href="style/forgot.css?v=2">
+    <link rel="stylesheet" href="style/forgot_password.css?v=<?php echo time(); ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Forgot Password - NNP Bank</title>
 </head>
@@ -41,6 +43,7 @@
                 while($row = mysqli_fetch_assoc($email_result)){
                     $rand = rand(1000,9999);    
                     // mail_sender($row['email'], 'Forgot Password', "Your OTP : $rand. do not share OTP to other.");
+                    error_display("OTP generated: " . $rand, "green");
                     return $rand;
                 }
             }
@@ -84,7 +87,7 @@
     ?>
 
 
-    <form action="forgot.php" method="post">
+    <form action="forgot_password.php" method="post">
         <div class="card">
             <p class="header">Forgot Password</p>
 

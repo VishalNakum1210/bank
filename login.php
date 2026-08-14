@@ -7,8 +7,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="pic/logo.png">
+    <link rel="shortcut icon" href="pic/logo.png" type="image/png">
     <link href='https://unpkg.com/boxicons@2.1.1/css/boxicons.min.css' rel='stylesheet'>
-    <link rel="stylesheet" href="style/login.css?v=2">
+    <link rel="stylesheet" href="style/login.css?v=<?php echo time(); ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - NNP Bank</title>
 </head>
@@ -105,16 +107,16 @@
             <div class="line">
                 <p class="text">Password</p>
                 <input type="password" name="password" required>
-                <a href="forgot.php"><p class="forget">Forget password</p></a>
+                <a href="forgot_password.php"><p class="forget">Forgot password?</p></a>
             </div>
 
             <button id="sub">Submit</button>
         </form>
         
-        <button id="back">Back</button>
+        <button id="back" onclick="window.history.back();">Back</button>
 
         <div class="registra">
-            <p>Not registration? <a href="registration.php">click here</a></p>
+            <p>Don't have an account? <a href="register.php">Click here</a></p>
         </div>
     </div>
 </body>

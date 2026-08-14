@@ -15,8 +15,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="style/transfer.css?v=3">
-    <link rel="stylesheet" href="style/side_nav.css?v=2">
+    <link rel="icon" type="image/png" href="pic/logo.png">
+    <link rel="shortcut icon" href="pic/logo.png" type="image/png">
+    <link href='https://unpkg.com/boxicons@2.1.1/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="style/transfer.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="style/side_nav.css?v=<?php echo time(); ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Transfer Money - NNP Bank</title>
 </head>

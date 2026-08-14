@@ -19,7 +19,7 @@ body{
     height: 250px;
     width: 450px;
     background-color: black;
-    background-image: url(/bank/pic/map.png);
+    background-image: url(../pic/map.png);
     background-size: cover;
     border-radius: 20px;
 }

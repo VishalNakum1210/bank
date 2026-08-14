@@ -43,14 +43,14 @@
                     </li>
 
                     <li class="nav-link">
-                        <a href="demo.php">
+                        <a href="card_demo.php">
                             <i class='bx bx-credit-card icon'></i>
                             <span class="text nav-text">Card Demo</span>
                         </a>
                     </li>
 
                     <li class="nav-link">
-                        <a href="with.php">
+                        <a href="withdraw.php">
                             <i class='bx bx-money-withdraw icon'></i>
                             <span class="text nav-text">Money Withdraw</span>
                         </a>
@@ -64,7 +64,7 @@
                     </li>
 
                     <li class="nav-link">
-                        <a href="history.php">
+                        <a href="transactions.php">
                         <i class='bx bx-history icon'></i>
                             <span class="text nav-text">History</span>
                         </a>

@@ -9,10 +9,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="pic/logo.png">
+    <link rel="shortcut icon" href="pic/logo.png" type="image/png">
     <link href='https://unpkg.com/boxicons@2.1.1/css/boxicons.min.css' rel='stylesheet'>
-    <link rel="stylesheet" href="style/regi.css?v=2">
+    <link rel="stylesheet" href="style/register.css?v=<?php echo time(); ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registration - NNP Bank</title>
+    <title>Create Account - NNP Bank</title>
 </head>
 <body>
 
@@ -164,7 +166,7 @@
             <p>Registration</p>
         </div>
 
-        <form action="registration.php" method="post">
+        <form action="register.php" method="post">
             <div class="line">
 
                 <span>

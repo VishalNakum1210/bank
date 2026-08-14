@@ -94,6 +94,8 @@ if ($sql_result && mysqli_num_rows($sql_result) > 0) {
 
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="pic/logo.png">
+    <link rel="shortcut icon" href="pic/logo.png" type="image/png">
     <link href='https://unpkg.com/boxicons@2.1.1/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="style/side_nav.css?v=<?php echo time(); ?>">
     <link rel="stylesheet" href="style/index.css?v=<?php echo time(); ?>">
