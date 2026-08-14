@@ -1,231 +1,190 @@
 <?php
-    session_start();
-    include "templets/_dbconnect.php";
-    // include "email/test.php";
-    if(!isset($_SESSION['login'])){
-        header("location: login.php");
-    }
-    else{
-        $id = $_SESSION['id'];
-        $username = $_SESSION['username'];
-    }
-?>
+session_start();
+require_once __DIR__ . "/config/db.php";
+require_once __DIR__ . "/includes/functions.php";
 
+if (!isset($_SESSION['login']) || $_SESSION['login'] !== true) {
+    header("Location: auth/login.php");
+    exit();
+}
+
+$id = $_SESSION['id'];
+$sender_username = $_SESSION['username'];
+$error_msg = "";
+$error_color = "red";
+
+// Handle Money Transfer Request
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset($_POST['email']) && isset($_POST['amount'])) {
+    $target_username = trim($_POST['username']);
+    $target_email = trim($_POST['email']);
+    $amount = (float)$_POST['amount'];
+
+    if ($amount <= 0) {
+        $error_msg = "Please enter a valid transfer amount greater than 0.";
+        $error_color = "red";
+    } elseif (strtolower($target_username) === strtolower($sender_username)) {
+        $error_msg = "You cannot transfer funds to your own account.";
+        $error_color = "red";
+    } else {
+        // Validate sender balance
+        $stmt_s = mysqli_prepare($conn, "SELECT amount FROM `money_bank` WHERE `account_id` = ?");
+        mysqli_stmt_bind_param($stmt_s, "i", $id);
+        mysqli_stmt_execute($stmt_s);
+        $res_s = mysqli_stmt_get_result($stmt_s);
+
+        if ($row_s = mysqli_fetch_assoc($res_s)) {
+            $sender_balance = (float)$row_s['amount'];
+
+            if ($sender_balance >= $amount) {
+                // Find receiver by username
+                $stmt_r = mysqli_prepare($conn, "SELECT account_id FROM `money_bank` WHERE `username` = ?");
+                mysqli_stmt_bind_param($stmt_r, "s", $target_username);
+                mysqli_stmt_execute($stmt_r);
+                $res_r = mysqli_stmt_get_result($stmt_r);
+
+                if ($row_r = mysqli_fetch_assoc($res_r)) {
+                    $receiver_id = $row_r['account_id'];
+
+                    // Validate receiver email matches
+                    $stmt_re = mysqli_prepare($conn, "SELECT email FROM `persnol` WHERE `account_id` = ?");
+                    mysqli_stmt_bind_param($stmt_re, "i", $receiver_id);
+                    mysqli_stmt_execute($stmt_re);
+                    $res_re = mysqli_stmt_get_result($stmt_re);
+
+                    if ($row_re = mysqli_fetch_assoc($res_re)) {
+                        if (strtolower(trim($row_re['email'])) === strtolower($target_email)) {
+                            // Execute Transfer within DB Transaction
+                            mysqli_begin_transaction($conn);
+                            try {
+                                // Deduct from sender
+                                $new_sender_bal = $sender_balance - $amount;
+                                $stmt_up_s = mysqli_prepare($conn, "UPDATE `money_bank` SET `amount` = ? WHERE `account_id` = ?");
+                                mysqli_stmt_bind_param($stmt_up_s, "di", $new_sender_bal, $id);
+                                mysqli_stmt_execute($stmt_up_s);
+                                mysqli_stmt_close($stmt_up_s);
+
+                                // Add to receiver
+                                $stmt_up_r = mysqli_prepare($conn, "UPDATE `money_bank` SET `amount` = `amount` + ? WHERE `account_id` = ?");
+                                mysqli_stmt_bind_param($stmt_up_r, "di", $amount, $receiver_id);
+                                mysqli_stmt_execute($stmt_up_r);
+                                mysqli_stmt_close($stmt_up_r);
+
+                                // History for sender
+                                $desc_s = "Money Sent to @" . $target_username;
+                                $status_s = "Debited";
+                                $stmt_h_s = mysqli_prepare($conn, "INSERT INTO `history` (`account_id`, `paymant_status`, `desc`, `time`, `amount`) VALUES (?, ?, ?, NOW(), ?)");
+                                mysqli_stmt_bind_param($stmt_h_s, "issd", $id, $status_s, $desc_s, $amount);
+                                mysqli_stmt_execute($stmt_h_s);
+                                mysqli_stmt_close($stmt_h_s);
+
+                                // History for receiver
+                                $desc_r = "Money Received from @" . $sender_username;
+                                $status_r = "Credited";
+                                $stmt_h_r = mysqli_prepare($conn, "INSERT INTO `history` (`account_id`, `paymant_status`, `desc`, `time`, `amount`) VALUES (?, ?, ?, NOW(), ?)");
+                                mysqli_stmt_bind_param($stmt_h_r, "issd", $receiver_id, $status_r, $desc_r, $amount);
+                                mysqli_stmt_execute($stmt_h_r);
+                                mysqli_stmt_close($stmt_h_r);
+
+                                mysqli_commit($conn);
+                                $error_msg = "Successfully transferred ₹" . format_inr($amount) . " to " . htmlspecialchars($target_username) . "!";
+                                $error_color = "green";
+                            } catch (Exception $e) {
+                                mysqli_rollback($conn);
+                                $error_msg = "Transfer failed due to a system error. Please try again.";
+                                $error_color = "red";
+                            }
+                        } else {
+                            $error_msg = "Receiver email address does not match account records.";
+                            $error_color = "red";
+                        }
+                    } else {
+                        $error_msg = "Receiver profile details not found.";
+                        $error_color = "red";
+                    }
+                    mysqli_stmt_close($stmt_re);
+                } else {
+                    $error_msg = "Receiver username does not exist.";
+                    $error_color = "red";
+                }
+                mysqli_stmt_close($stmt_r);
+            } else {
+                $error_msg = "Insufficient balance for this transfer.";
+                $error_color = "red";
+            }
+        }
+        mysqli_stmt_close($stmt_s);
+    }
+}
+
+// Fetch sender account card details
+$account_number = "XXXX XXXX XXXX XXXX";
+$stmt_acc = mysqli_prepare($conn, "SELECT account_number FROM `account_details` WHERE `account_id` = ?");
+mysqli_stmt_bind_param($stmt_acc, "i", $id);
+mysqli_stmt_execute($stmt_acc);
+$res_acc = mysqli_stmt_get_result($stmt_acc);
+if ($row_acc = mysqli_fetch_assoc($res_acc)) {
+    $account_number = $row_acc['account_number'];
+}
+mysqli_stmt_close($stmt_acc);
+
+$account_holder = $sender_username;
+$stmt_p = mysqli_prepare($conn, "SELECT name FROM `persnol` WHERE `account_id` = ?");
+mysqli_stmt_bind_param($stmt_p, "i", $id);
+mysqli_stmt_execute($stmt_p);
+$res_p = mysqli_stmt_get_result($stmt_p);
+if ($row_p = mysqli_fetch_assoc($res_p)) {
+    $account_holder = $row_p['name'];
+}
+mysqli_stmt_close($stmt_p);
+
+$money_bal = 0.0;
+$stmt_m = mysqli_prepare($conn, "SELECT amount FROM `money_bank` WHERE `account_id` = ?");
+mysqli_stmt_bind_param($stmt_m, "i", $id);
+mysqli_stmt_execute($stmt_m);
+$res_m = mysqli_stmt_get_result($stmt_m);
+if ($row_m = mysqli_fetch_assoc($res_m)) {
+    $money_bal = (float)$row_m['amount'];
+}
+mysqli_stmt_close($stmt_m);
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link rel="icon" type="image/png" href="pic/logo.png">
-    <link rel="shortcut icon" href="pic/logo.png" type="image/png">
+    <link rel="icon" type="image/png" href="assets/images/logo.png">
+    <link rel="shortcut icon" href="assets/images/logo.png" type="image/png">
     <link href='https://unpkg.com/boxicons@2.1.1/css/boxicons.min.css' rel='stylesheet'>
-    <link rel="stylesheet" href="style/transfer.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="style/side_nav.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="assets/css/transfer.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="assets/css/side_nav.css?v=<?php echo time(); ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Transfer Money - NNP Bank</title>
 </head>
 <body>
-<?php include "templets/side_nav.php"; ?>
+    <?php include "includes/sidebar.php"; ?>
 
-<?php
-    if(isset($_POST['amount'])){
-
-        #error function
-
-        function error_display($error, $color = "red"){
-            $bg_color = ($color == "green" || $color == "#16a34a" || $color == "#10b981") ? "#16a34a" : (($color == "red" || $color == "#e11d48") ? "#e11d48" : $color);
-            $icon = ($bg_color == "#16a34a") ? "bx-check-circle" : "bx-error";
-            echo '<div style="background-color: '.$bg_color.';" class="error_noti">
-                <i class="bx '.$icon.'"></i>
-                <span>
-                    '.$error.'
-                </span>
-                <i class="bx bx-x icon2" onclick="this.parentElement.remove();"></i>
-            </div>';
+    <?php
+        if (!empty($error_msg)) {
+            error_display($error_msg, $error_color);
         }
-
-        #class for cut & add_money
-            #cut money for user
-            function user_money($money, $username, $receiver_id, $mail){
-                #to store money
-                global $id, $conn;
-                $user_store_money = "SELECT * FROM `money_bank` WHERE `account_id` = '$id';";
-                $result_user_money = mysqli_query($conn, $user_store_money);
-                $user_money_row = mysqli_num_rows($result_user_money);
-
-                if($user_money_row == 1){
-                    while($row = mysqli_fetch_assoc($result_user_money)){
-                        
-                        if($money > 0){
-                            if($money <= $row['amount']){
-                                #cut money
-                                $new_amount = $row['amount'] - $money;
-                                $user_cut_money = "UPDATE `money_bank` SET `amount`='$new_amount' WHERE `account_id` = '$id';";
-                                $result_cut_money = mysqli_query($conn, $user_cut_money);   
-
-                                #entey in history
-                                $date = date('Y-m-d H:i:s');
-                                $entery = "INSERT INTO `history`(`account_id`, `paymant_status`, `desc`, `time`, `amount`) VALUES ('$id','Debited','Money Sended to $username','$date','$money');";
-                                $result_entery = mysqli_query($conn, $entery);
-                                receiver_money($receiver_id, $money, $mail);
-
-                            }
-                            else{
-                                $error =  "not have much money in you account";
-                                error_display($error);
-                            }
-                        }
-                        else{
-                            $error = "invalid amount";
-                            error_display($error);
-                        }
-                    }
-                }
-                else{
-                    header("location: login.php");
-                }
-            }
-
-            #add money in receiver account
-            function receiver_money($receiver_id, $money, $mail){
-
-                global $id, $conn;
-                $receiver_store_money = "SELECT * FROM `money_bank` WHERE `account_id` = '$receiver_id';";
-                $result_receiver_money = mysqli_query($conn, $receiver_store_money);
-                $receiver_money_row = mysqli_num_rows($result_receiver_money);
-
-                if($receiver_money_row == 1){
-                    while($row = mysqli_fetch_assoc($result_receiver_money)){
-
-                        #add money
-                        $new_amount = $row['amount'] + $money;
-                        $receiver_add_money = "UPDATE `money_bank` SET `amount`='$new_amount' WHERE `account_id` = '$receiver_id';";
-                        $result_add_money = mysqli_query($conn, $receiver_add_money);
-
-                        #send mail (commented out)         
-                        // $title = "Transfer Money";
-                        // $desc = "You have successfully received ".$money." from ".$_SESSION['username'];
-                        // mail_sender($mail,$title, $desc);
-
-                        #entey in history
-                        $sender_username = $_SESSION['username'];
-                        $date = date('Y-m-d H:i:s');
-                        $entery = "INSERT INTO `history`(`account_id`, `paymant_status`, `desc`, `time`, `amount`) VALUES ('$receiver_id','Credited','Money Sended by $sender_username','$date','$money');";
-                        $result_entery = mysqli_query($conn, $entery);
-
-                        $error = "Payment Successfully";
-                        error_display($error,"green");
-                    }
-                }
-            }
-
-        
-        #check receiver user
-        function user_check($username, $mail, $money){
-            global $conn;
-
-            #user check
-            $check_user = "SELECT * FROM `money_bank` WHERE `username` = '$username';";
-            $result_user = mysqli_query($conn, $check_user);
-            $user_row = mysqli_num_rows($result_user);
-
-            if($user_row == 1){
-                while($row = mysqli_fetch_assoc($result_user)){
-                    $receiver_id = $row['account_id'];
-                    #chech e-mail
-                    $chech_mail = "SELECT * FROM `persnol` WHERE `account_id` = '$receiver_id';";
-                    $result_mail = mysqli_query($conn, $chech_mail);
-                    $mail_row = mysqli_num_rows($result_mail);
-
-                    if($mail_row == 1){
-                        while($row2 = mysqli_fetch_assoc($result_mail)){
-                            if($mail == $row2['email']){
-                                user_money($money, $username, $receiver_id, $mail);
-                            }
-                            else{
-                                $error =  "invalid e-mail";
-                                error_display($error);
-                            }
-                        }
-                    }
-                    else{
-                        $error =  "invalid e-mail";
-                        error_display($error);
-                    }
-                }
-            }
-            else{
-                $error =  "invalid username";
-                error_display($error);
-            }
-        }
-
-
-        #main
-        $username = $_POST['username'];
-        $mail = $_POST['email'];
-        $money = $_POST['amount'];
-
-
-        user_check($username, $mail, $money);
-    }
-?>
+    ?>
 
     <div class="card1">
         <div class="card-column">
             <div class="card2">
-
-                <?php
-
-                    #to store account_number
-                    $store_account_number = "SELECT * FROM `account_details` WHERE `account_id` = '$id';";
-                    $result_account_number = mysqli_query($conn, $store_account_number);
-                    $account_number_row = mysqli_num_rows($result_account_number);
-
-                    if($account_number_row == 1){
-                        while($row = mysqli_fetch_assoc($result_account_number)){
-                            $account_number = $row['account_number'];
-                        }
-                    }
-
-                    #to store account_holder_name 
-                    $store_account_holder = "SELECT * FROM `persnol` WHERE `account_id` = '$id';";
-                    $result_account_holder = mysqli_query($conn, $store_account_holder);
-                    $account_holder_row = mysqli_num_rows($result_account_holder);
-
-                    if($account_holder_row == 1){
-                        while($row = mysqli_fetch_assoc($result_account_holder)){
-                            $account_holder = $row['name'];
-                        }
-                    }
-
-                    #to store money
-                    $store_money = "SELECT * FROM `money_bank` WHERE `account_id` = '$id';";
-                    $result_money = mysqli_query($conn, $store_money);
-                    $money_row = mysqli_num_rows($result_money);
-
-                    if($money_row == 1){
-                        while($row = mysqli_fetch_assoc($result_money)){
-                            $money = $row['amount'];
-                        }
-                    }
-
-                ?>
-
                 <div class="card-chip-row">
-                    <img src="pic/chip.png" class="chip-lg" alt="Chip">
-                    <img src="pic/visa.png" class="visa-lg" alt="Visa">
+                    <img src="assets/images/chip.png" class="chip-lg" alt="Chip">
+                    <img src="assets/images/visa.png" class="visa-lg" alt="Visa">
                 </div>
-                <div class="card-number"><?php echo htmlspecialchars($account_number ?? ''); ?></div>
-                <div class="card-name"><?php echo ucwords(htmlspecialchars($account_holder ?? '')); ?></div>
+                <div class="card-number"><?php echo htmlspecialchars($account_number); ?></div>
+                <div class="card-name"><?php echo ucwords(htmlspecialchars($account_holder)); ?></div>
                 <div class="card-footer">
-                    <div class="amt-display">Balance<br>&#8377;<?php echo number_format((float)($money ?? 0), 2); ?></div>
-                    <img src="pic/logo.png" class="bank-logo" alt="Bank Logo">
+                    <div class="amt-display">Balance<br>&#8377;<?php echo format_inr($money_bal); ?></div>
+                    <img src="assets/images/logo.png" class="bank-logo" alt="Bank Logo">
                 </div>
             </div>
         </div>
 
         <div class="input_line">
-
             <div class="title_line">
                 <p>Transfer Money</p>
             </div>
@@ -233,33 +192,32 @@
             <form action="transfer.php" method="post">
                 <div class="line1">
                     <span>
-                        <p class="text">Username</p>
-                        <input type="text" placeholder="Receiver Username" name="username" required>
+                        <p class="text">Receiver Username</p>
+                        <input type="text" placeholder="Receiver Username" name="username" required autocomplete="off">
                     </span>
                 </div>
 
                 <div class="line1">
                     <span>
-                        <p class="text">E-mail</p>
-                        <input type="email" placeholder="Receiver E-mail" name="email" required>
+                        <p class="text">Receiver E-mail</p>
+                        <input type="email" placeholder="Receiver E-mail" name="email" required autocomplete="off">
                     </span>
                 </div>
 
                 <div class="line1">
                     <span>
-                        <p class="text">Amount</p>
-                        <input type="number" placeholder="Enter amount" name="amount" required>
+                        <p class="text">Amount (&#8377;)</p>
+                        <input type="number" step="any" placeholder="Enter transfer amount" name="amount" required min="1">
                     </span>
                 </div>
 
                 <div class="btn-group">
-                    <button type="submit" id="sub">Submit</button>
+                    <button type="submit" id="sub">Send Money</button>
                     <a href="index.php" class="back_link">
                         <button type="button" id="back">Back</button>
                     </a>
                 </div>
             </form>
-            
         </div>
     </div>
 </body>

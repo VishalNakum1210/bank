@@ -1,194 +1,144 @@
 <?php
-    session_start();
-    include "templets/_dbconnect.php";
-    // include "email/test.php";
-    if(!isset($_SESSION['login'])){
-        header("location: login.php");
-        exit();
-    }
-    else{
-        $id = $_SESSION['id'];
-        $username = $_SESSION['username'];
-    }
-?>
+session_start();
+require_once __DIR__ . "/config/db.php";
+require_once __DIR__ . "/includes/functions.php";
 
+if (!isset($_SESSION['login']) || $_SESSION['login'] !== true) {
+    header("Location: auth/login.php");
+    exit();
+}
+
+$id = $_SESSION['id'];
+$username = $_SESSION['username'];
+$error_msg = "";
+$error_color = "red";
+
+// Handle Withdrawal Request
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['amount']) && isset($_POST['Pin'])) {
+    $money = (float)$_POST['amount'];
+    $entered_pin = trim($_POST['Pin']);
+
+    if ($money > 0) {
+        // Fetch user's PIN from account_details
+        $stmt_pin = mysqli_prepare($conn, "SELECT pin FROM `account_details` WHERE `account_id` = ?");
+        mysqli_stmt_bind_param($stmt_pin, "i", $id);
+        mysqli_stmt_execute($stmt_pin);
+        $res_pin = mysqli_stmt_get_result($stmt_pin);
+
+        if ($row_pin = mysqli_fetch_assoc($res_pin)) {
+            if ($entered_pin === (string)$row_pin['pin']) {
+                // Check balance
+                $stmt_mb = mysqli_prepare($conn, "SELECT amount FROM `money_bank` WHERE `account_id` = ?");
+                mysqli_stmt_bind_param($stmt_mb, "i", $id);
+                mysqli_stmt_execute($stmt_mb);
+                $res_mb = mysqli_stmt_get_result($stmt_mb);
+
+                if ($row_mb = mysqli_fetch_assoc($res_mb)) {
+                    $curr_balance = (float)$row_mb['amount'];
+                    if ($money <= $curr_balance) {
+                        $new_balance = $curr_balance - $money;
+
+                        // Deduct money
+                        $stmt_deduct = mysqli_prepare($conn, "UPDATE `money_bank` SET `amount` = ? WHERE `account_id` = ?");
+                        mysqli_stmt_bind_param($stmt_deduct, "di", $new_balance, $id);
+                        mysqli_stmt_execute($stmt_deduct);
+                        mysqli_stmt_close($stmt_deduct);
+
+                        // Record history
+                        $trans_desc = "Withdrawal Money";
+                        $status = "Debited";
+                        $hist_stmt = mysqli_prepare($conn, "INSERT INTO `history` (`account_id`, `paymant_status`, `desc`, `time`, `amount`) VALUES (?, ?, ?, NOW(), ?)");
+                        mysqli_stmt_bind_param($hist_stmt, "issd", $id, $status, $trans_desc, $money);
+                        mysqli_stmt_execute($hist_stmt);
+                        mysqli_stmt_close($hist_stmt);
+
+                        $error_msg = "₹" . format_inr($money) . " withdrawn successfully!";
+                        $error_color = "green";
+                    } else {
+                        $error_msg = "Insufficient funds in your account.";
+                        $error_color = "red";
+                    }
+                }
+                mysqli_stmt_close($stmt_mb);
+            } else {
+                $error_msg = "Incorrect PIN entered. Please try again.";
+                $error_color = "red";
+            }
+        } else {
+            $error_msg = "Account details not found.";
+            $error_color = "red";
+        }
+        mysqli_stmt_close($stmt_pin);
+    } else {
+        $error_msg = "Please enter a valid withdrawal amount.";
+        $error_color = "red";
+    }
+}
+
+// Fetch Account Info for Card preview
+$account_number = "XXXX XXXX XXXX XXXX";
+$stmt_acc = mysqli_prepare($conn, "SELECT account_number FROM `account_details` WHERE `account_id` = ?");
+mysqli_stmt_bind_param($stmt_acc, "i", $id);
+mysqli_stmt_execute($stmt_acc);
+$res_acc = mysqli_stmt_get_result($stmt_acc);
+if ($row_acc = mysqli_fetch_assoc($res_acc)) {
+    $account_number = $row_acc['account_number'];
+}
+mysqli_stmt_close($stmt_acc);
+
+$account_holder = $username;
+$stmt_p = mysqli_prepare($conn, "SELECT name FROM `persnol` WHERE `account_id` = ?");
+mysqli_stmt_bind_param($stmt_p, "i", $id);
+mysqli_stmt_execute($stmt_p);
+$res_p = mysqli_stmt_get_result($stmt_p);
+if ($row_p = mysqli_fetch_assoc($res_p)) {
+    $account_holder = $row_p['name'];
+}
+mysqli_stmt_close($stmt_p);
+
+$money_bal = 0.0;
+$stmt_m = mysqli_prepare($conn, "SELECT amount FROM `money_bank` WHERE `account_id` = ?");
+mysqli_stmt_bind_param($stmt_m, "i", $id);
+mysqli_stmt_execute($stmt_m);
+$res_m = mysqli_stmt_get_result($stmt_m);
+if ($row_m = mysqli_fetch_assoc($res_m)) {
+    $money_bal = (float)$row_m['amount'];
+}
+mysqli_stmt_close($stmt_m);
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link rel="icon" type="image/png" href="pic/logo.png">
-    <link rel="shortcut icon" href="pic/logo.png" type="image/png">
+    <link rel="icon" type="image/png" href="assets/images/logo.png">
+    <link rel="shortcut icon" href="assets/images/logo.png" type="image/png">
     <link href='https://unpkg.com/boxicons@2.1.1/css/boxicons.min.css' rel='stylesheet'>
-    <link rel="stylesheet" href="style/withdraw.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="style/side_nav.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="assets/css/withdraw.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="assets/css/side_nav.css?v=<?php echo time(); ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Withdraw Money - NNP Bank</title>
 </head>
 <body>
-<?php include "templets/side_nav.php"; ?>
+    <?php include "includes/sidebar.php"; ?>
 
-<?php
-
-    if(isset($_POST['amount']) || isset($_POST['Pin'])){
-
-        #error function
-        function error_display($error, $color = "red"){
-            $bg_color = ($color == "green" || $color == "#16a34a" || $color == "#10b981") ? "#16a34a" : (($color == "red" || $color == "#e11d48") ? "#e11d48" : $color);
-            $icon = ($bg_color == "#16a34a") ? "bx-check-circle" : "bx-error";
-            echo '<div style="background-color: '.$bg_color.';" class="error_noti">
-                <i class="bx '.$icon.'"></i>
-                <span>
-                    '.$error.'  
-                </span>
-                <i class="bx bx-x icon2" onclick="this.parentElement.remove();"></i>
-            </div>';
+    <?php
+        if (!empty($error_msg)) {
+            error_display($error_msg, $error_color);
         }
-
-        #cut money from account
-        class withd{
-
-            #user account
-            function user_account($money){
-                global $conn, $id;
-                $check_amount = "SELECT * FROM `money_bank` WHERE `account_id` = '$id';";
-                $amount_result = mysqli_query($conn, $check_amount);
-                $amount_row = mysqli_num_rows($amount_result);
-
-                if($amount_row == 1){
-                    while($row = mysqli_fetch_assoc($amount_result)){
-                        $ori_money = $row['amount'];
-                    }
-                    $add_amount = $ori_money - $money;
-                    $add_money_sql = "UPDATE `money_bank` SET `amount`='$add_amount' WHERE `account_id` = '$id';";
-                    $result_add_money = mysqli_query($conn, $add_money_sql);
-                }
-            }
-
-        }
-
-        #check pin
-        function check($pin, $money){
-            global $conn, $id;
-
-            if($money > 0 ){
-                #to store money
-                $store_money = "SELECT * FROM `money_bank` WHERE `account_id` = '$id';";
-                $result_money = mysqli_query($conn, $store_money);
-                $money_row = mysqli_num_rows($result_money);
-                $ori_money = 0;
-
-                if($money_row == 1){
-                    while($row = mysqli_fetch_assoc($result_money)){
-                        $ori_money = (float)$row['amount'];
-                    }
-                }
-
-                $chech_pin = "SELECT * FROM `account_details` WHERE `account_id` = '$id';";
-                $result_pin = mysqli_query($conn, $chech_pin);
-                $pin_row = mysqli_num_rows($result_pin);
-
-                if($pin_row == 1){
-                    while($row = mysqli_fetch_assoc($result_pin)){
-                        if(trim($pin) == trim($row['pin'])){
-                            if($money <= $ori_money){
-                                $temp = new withd();
-
-                                $temp->user_account($money);
-
-                                #send email (commented out)
-                                /*
-                                $user_email = $_SESSION["email"] ?? '';
-                                if(!empty($user_email)){
-                                    $title = "Debited Money";
-                                    $desc = "Your A/C can be Debited with Rs ".$money;
-                                    mail_sender($user_email, $title, $desc);
-                                }
-                                */
-
-                                #entey in history
-                                $date = date('Y-m-d H:i:s');
-                                $entery = "INSERT INTO `history`(`account_id`, `paymant_status`, `desc`, `time`, `amount`) VALUES ('$id','Debited','Withdrawal Money','$date','$money');";
-                                $result_entery = mysqli_query($conn, $entery);
-                                $error = "Withdraw successfully";
-                                error_display($error, "green");
-                            }
-                            else{
-                                $error = "not have that much amount in account";
-                                error_display($error);
-                            }
-                        }
-                        else{
-                            $error = "wrong pin";
-                            error_display($error);
-                        }
-                    }
-                }
-                else {
-                    $error = "Account details not found";
-                    error_display($error, "red");
-                }
-            }
-            else{
-                $error = "Invalid Amount";
-                error_display($error, "red");
-            }
-        }
-
-        #main section
-        $pin = $_POST['Pin'];
-        $money = $_POST['amount'];
-
-        check($pin, $money);
-
-    }
-?>
+    ?>
 
     <div class="card1">
         <div class="card-column">
             <div class="card2">
-                <?php
-                    #to store account_number
-                    $store_account_number = "SELECT * FROM `account_details` WHERE `account_id` = '$id';";
-                    $result_account_number = mysqli_query($conn, $store_account_number);
-                    $account_number_row = mysqli_num_rows($result_account_number);
-
-                    if($account_number_row == 1){
-                        while($row = mysqli_fetch_assoc($result_account_number)){
-                            $account_number = $row['account_number'];
-                        }
-                    }
-
-                    #to store account_holder_name 
-                    $store_account_holder = "SELECT * FROM `persnol` WHERE `account_id` = '$id';";
-                    $result_account_holder = mysqli_query($conn, $store_account_holder);
-                    $account_holder_row = mysqli_num_rows($result_account_holder);
-
-                    if($account_holder_row == 1){
-                        while($row = mysqli_fetch_assoc($result_account_holder)){
-                            $account_holder = $row['name'];
-                        }
-                    }
-
-                    #to store money
-                    $store_money = "SELECT * FROM `money_bank` WHERE `account_id` = '$id';";
-                    $result_money = mysqli_query($conn, $store_money);
-                    $money_row = mysqli_num_rows($result_money);
-
-                    if($money_row == 1){
-                        while($row = mysqli_fetch_assoc($result_money)){
-                            $money = $row['amount'];
-                        }
-                    }
-                ?>
                 <div class="card-chip-row">
-                    <img src="pic/chip.png" class="chip-lg" alt="Chip">
-                    <img src="pic/visa.png" class="visa-lg" alt="Visa">
+                    <img src="assets/images/chip.png" class="chip-lg" alt="Chip">
+                    <img src="assets/images/visa.png" class="visa-lg" alt="Visa">
                 </div>
-                <div class="card-number"><?php echo htmlspecialchars($account_number ?? ''); ?></div>
-                <div class="card-name"><?php echo ucwords(htmlspecialchars($account_holder ?? '')); ?></div>
+                <div class="card-number"><?php echo htmlspecialchars($account_number); ?></div>
+                <div class="card-name"><?php echo ucwords(htmlspecialchars($account_holder)); ?></div>
                 <div class="card-footer">
-                    <div class="amt-display">Balance<br>&#8377;<?php echo number_format((float)($money ?? 0), 2); ?></div>
-                    <img src="pic/logo.png" class="bank-logo" alt="Bank Logo">
+                    <div class="amt-display">Balance<br>&#8377;<?php echo format_inr($money_bal); ?></div>
+                    <img src="assets/images/logo.png" class="bank-logo" alt="Bank Logo">
                 </div>
             </div>
         </div>
@@ -201,20 +151,20 @@
             <form action="withdraw.php" method="post">
                 <div class="line1">
                     <span>
-                        <p class="text">Amount</p>
-                        <input type="number" placeholder="Enter amount to withdraw" name="amount" required>
+                        <p class="text">Amount (&#8377;)</p>
+                        <input type="number" step="any" placeholder="Enter amount to withdraw" name="amount" required min="1">
                     </span>
                 </div>
 
                 <div class="line1">
                     <span>
-                        <p class="text">Pin</p>
-                        <input type="password" placeholder="Enter 4-digit PIN" name="Pin" required>
+                        <p class="text">4-Digit Security PIN</p>
+                        <input type="password" placeholder="Enter 4-digit PIN" name="Pin" required maxlength="4">
                     </span>
                 </div>
 
                 <div class="btn-group">
-                    <button type="submit" id="sub">Submit</button>
+                    <button type="submit" id="sub">Withdraw Funds</button>
                     <a href="index.php" class="back_link">
                         <button type="button" id="back">Back</button>
                     </a>

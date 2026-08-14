@@ -1,147 +1,122 @@
 <?php
-    session_start();
-    include "templets/_dbconnect.php";
-    include "templets/internet_connection.php";
-    // include "email/test.php";
-    if(!isset($_SESSION["login"])){
-        header("location: login.php");
-        exit();
-    }
-    else{
-        $username = $_SESSION['username'];
-        $id = $_SESSION['id'];
-    }
-?>
+session_start();
+require_once __DIR__ . "/config/db.php";
+require_once __DIR__ . "/config/internet_check.php";
+require_once __DIR__ . "/includes/functions.php";
 
+if (!isset($_SESSION["login"]) || $_SESSION["login"] !== true) {
+    header("Location: auth/login.php");
+    exit();
+}
+
+$username = $_SESSION['username'];
+$id = $_SESSION['id'];
+$error_msg = "";
+$error_color = "red";
+
+// Handle Add Money Request
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['amount'])) {
+    $new_amount = (float)$_POST['amount'];
+
+    if ($new_amount > 0) {
+        // Fetch current amount
+        $stmt = mysqli_prepare($conn, "SELECT amount FROM `money_bank` WHERE `account_id` = ?");
+        mysqli_stmt_bind_param($stmt, "i", $id);
+        mysqli_stmt_execute($stmt);
+        $res = mysqli_stmt_get_result($stmt);
+
+        if ($row = mysqli_fetch_assoc($res)) {
+            $current_money = (float)$row['amount'];
+            $updated_amount = $current_money + $new_amount;
+
+            // Update balance
+            $update_stmt = mysqli_prepare($conn, "UPDATE `money_bank` SET `amount` = ? WHERE `account_id` = ?");
+            mysqli_stmt_bind_param($update_stmt, "di", $updated_amount, $id);
+            mysqli_stmt_execute($update_stmt);
+            mysqli_stmt_close($update_stmt);
+
+            // Record transaction history
+            $trans_desc = "Added Money (Deposit)";
+            $status = "Credited";
+            $hist_stmt = mysqli_prepare($conn, "INSERT INTO `history` (`account_id`, `paymant_status`, `desc`, `time`, `amount`) VALUES (?, ?, ?, NOW(), ?)");
+            mysqli_stmt_bind_param($hist_stmt, "issd", $id, $status, $trans_desc, $new_amount);
+            mysqli_stmt_execute($hist_stmt);
+            mysqli_stmt_close($hist_stmt);
+
+            $error_msg = "₹" . format_inr($new_amount) . " added to your account successfully!";
+            $error_color = "green";
+        }
+        mysqli_stmt_close($stmt);
+    } else {
+        $error_msg = "Please enter a valid positive amount.";
+        $error_color = "red";
+    }
+}
+
+// Fetch Account Info for Card preview
+$account_number = "XXXX XXXX XXXX XXXX";
+$stmt_acc = mysqli_prepare($conn, "SELECT account_number FROM `account_details` WHERE `account_id` = ?");
+mysqli_stmt_bind_param($stmt_acc, "i", $id);
+mysqli_stmt_execute($stmt_acc);
+$res_acc = mysqli_stmt_get_result($stmt_acc);
+if ($row_acc = mysqli_fetch_assoc($res_acc)) {
+    $account_number = $row_acc['account_number'];
+}
+mysqli_stmt_close($stmt_acc);
+
+$account_holder = $username;
+$stmt_p = mysqli_prepare($conn, "SELECT name FROM `persnol` WHERE `account_id` = ?");
+mysqli_stmt_bind_param($stmt_p, "i", $id);
+mysqli_stmt_execute($stmt_p);
+$res_p = mysqli_stmt_get_result($stmt_p);
+if ($row_p = mysqli_fetch_assoc($res_p)) {
+    $account_holder = $row_p['name'];
+}
+mysqli_stmt_close($stmt_p);
+
+$money = 0.0;
+$stmt_m = mysqli_prepare($conn, "SELECT amount FROM `money_bank` WHERE `account_id` = ?");
+mysqli_stmt_bind_param($stmt_m, "i", $id);
+mysqli_stmt_execute($stmt_m);
+$res_m = mysqli_stmt_get_result($stmt_m);
+if ($row_m = mysqli_fetch_assoc($res_m)) {
+    $money = (float)$row_m['amount'];
+}
+mysqli_stmt_close($stmt_m);
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link rel="icon" type="image/png" href="pic/logo.png">
-    <link rel="shortcut icon" href="pic/logo.png" type="image/png">
+    <link rel="icon" type="image/png" href="assets/images/logo.png">
+    <link rel="shortcut icon" href="assets/images/logo.png" type="image/png">
     <link href='https://unpkg.com/boxicons@2.1.1/css/boxicons.min.css' rel='stylesheet'>
-    <link rel="stylesheet" href="style/add_money.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="style/side_nav.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="assets/css/add_money.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="assets/css/side_nav.css?v=<?php echo time(); ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Money - NNP Bank</title>
 </head>
 <body>
-    <?php include "templets/side_nav.php"; ?>
+    <?php include "includes/sidebar.php"; ?>
 
     <?php
-        function error_display($error, $color = "red"){
-            $bg_color = ($color == "green" || $color == "#16a34a" || $color == "#10b981") ? "#16a34a" : (($color == "red" || $color == "#e11d48") ? "#e11d48" : $color);
-            $icon = ($bg_color == "#16a34a") ? "bx-check-circle" : "bx-error";
-            echo '<div style="background-color: '.$bg_color.';" class="error_noti">
-                <i class="bx '.$icon.'"></i>
-                <span>
-                    '.$error.'  
-                </span>
-                <i class="bx bx-x icon2" onclick="this.parentElement.remove();"></i>
-            </div>';
-        }
-
-        if(isset($_POST['amount'])){
-
-            #send email (commented out)
-            /*
-            function send_mail($amount){
-                $user_email = $_SESSION['email'];
-                $title = "Credited Money";
-                $desc = "Your A/C can be Credited with Rs".$amount;
-
-                mail_sender( $user_email, $title, $desc);
-            }
-            */
-
-            #check
-            function check($new_amount){
-                if($new_amount > 0){
-                    add($new_amount);
-                }
-                else{
-                    $error =  "invalid amount";
-                    error_display($error, "red");
-                }
-            }
-
-            #add money
-            function add($new_amount){
-                global $conn, $id;
-                $store_money = "SELECT * FROM `money_bank` WHERE `account_id` = '$id';";
-                $result_money = mysqli_query($conn, $store_money);
-                $money_row = mysqli_num_rows($result_money);
-
-                if($money_row == 1){
-                    while($row = mysqli_fetch_assoc($result_money)){
-                        $money = $row['amount'];
-                    }
-                }
-                $add_amount = $money + $new_amount;
-                $add_money_sql = "UPDATE `money_bank` SET `amount`='$add_amount' WHERE `account_id` = '$id';";
-                $result_add_money = mysqli_query($conn, $add_money_sql);
-                // send_mail($new_amount);
-
-                #entey in history
-                $date = date('Y-m-d H:i:s');
-                $entery = "INSERT INTO `history`(`account_id`, `paymant_status`, `desc`, `time`, `amount`) VALUES ('$id','Credited','Added Money','$date','$new_amount');";
-                $result_entery = mysqli_query($conn, $entery);
-
-                $error = "Money added to your account successfully";
-                error_display($error, "green");
-            }
-
-            $new_amount = $_POST['amount'];
-            check($new_amount);
+        if (!empty($error_msg)) {
+            error_display($error_msg, $error_color);
         }
     ?>
 
     <div class="card1">
         <div class="card-column">
             <div class="card2">
-                <?php
-                    #to store account_number
-                    $store_account_number = "SELECT * FROM `account_details` WHERE `account_id` = '$id';";
-                    $result_account_number = mysqli_query($conn, $store_account_number);
-                    $account_number_row = mysqli_num_rows($result_account_number);
-
-                    if($account_number_row == 1){
-                        while($row = mysqli_fetch_assoc($result_account_number)){
-                            $account_number = $row['account_number'];
-                        }
-                    }
-
-                    #to store account_holder_name 
-                    $store_account_holder = "SELECT * FROM `persnol` WHERE `account_id` = '$id';";
-                    $result_account_holder = mysqli_query($conn, $store_account_holder);
-                    $account_holder_row = mysqli_num_rows($result_account_holder);
-
-                    if($account_holder_row == 1){
-                        while($row = mysqli_fetch_assoc($result_account_holder)){
-                            $account_holder = $row['name'];
-                        }
-                    }
-
-                    #to store money
-                    $store_money = "SELECT * FROM `money_bank` WHERE `account_id` = '$id';";
-                    $result_money = mysqli_query($conn, $store_money);
-                    $money_row = mysqli_num_rows($result_money);
-
-                    if($money_row == 1){
-                        while($row = mysqli_fetch_assoc($result_money)){
-                            $money = $row['amount'];
-                        }
-                    }
-                ?>
                 <div class="card-chip-row">
-                    <img src="pic/chip.png" class="chip-lg" alt="Chip">
-                    <img src="pic/visa.png" class="visa-lg" alt="Visa">
+                    <img src="assets/images/chip.png" class="chip-lg" alt="Chip">
+                    <img src="assets/images/visa.png" class="visa-lg" alt="Visa">
                 </div>
-                <div class="card-number"><?php echo htmlspecialchars($account_number ?? ''); ?></div>
-                <div class="card-name"><?php echo ucwords(htmlspecialchars($account_holder ?? '')); ?></div>
+                <div class="card-number"><?php echo htmlspecialchars($account_number); ?></div>
+                <div class="card-name"><?php echo ucwords(htmlspecialchars($account_holder)); ?></div>
                 <div class="card-footer">
-                    <div class="amt-display">Balance<br>&#8377;<?php echo number_format((float)($money ?? 0), 2); ?></div>
-                    <img src="pic/logo.png" class="bank-logo" alt="Bank Logo">
+                    <div class="amt-display">Balance<br>&#8377;<?php echo format_inr($money); ?></div>
+                    <img src="assets/images/logo.png" class="bank-logo" alt="Bank Logo">
                 </div>
             </div>
         </div>
@@ -154,13 +129,13 @@
             <form action="add_money.php" method="post">
                 <div class="line1">
                     <span>
-                        <p class="text">Amount</p>
-                        <input type="number" placeholder="Enter amount to add" name="amount" required>
+                        <p class="text">Amount (&#8377;)</p>
+                        <input type="number" step="any" placeholder="Enter amount to add" name="amount" required min="1">
                     </span>
                 </div>
 
                 <div class="btn-group">
-                    <button type="submit" id="sub">Submit</button>
+                    <button type="submit" id="sub">Deposit Funds</button>
                     <a href="index.php" class="back_link">
                         <button type="button" id="back">Back</button>
                     </a>

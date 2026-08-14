@@ -1,24 +1,47 @@
 <?php
-    session_start();
-    include "templets/_dbconnect.php";
-    if(!isset($_SESSION["login"])){
-        header("location: login.php");
-    }
-    else{
-        $username = $_SESSION['username'];
-        $id = $_SESSION['id'];
-    }
-?>
+session_start();
+require_once __DIR__ . "/config/db.php";
+require_once __DIR__ . "/includes/functions.php";
 
+if (!isset($_SESSION["login"]) || $_SESSION["login"] !== true) {
+    header("Location: auth/login.php");
+    exit();
+}
+
+$username = $_SESSION['username'];
+$id = $_SESSION['id'];
+
+// Fetch account details
+$account_number = "XXXX XXXX XXXX XXXX";
+$stmt_acc = mysqli_prepare($conn, "SELECT account_number FROM `account_details` WHERE `account_id` = ?");
+mysqli_stmt_bind_param($stmt_acc, "i", $id);
+mysqli_stmt_execute($stmt_acc);
+$res_acc = mysqli_stmt_get_result($stmt_acc);
+if ($row_acc = mysqli_fetch_assoc($res_acc)) {
+    $account_number = $row_acc['account_number'];
+}
+mysqli_stmt_close($stmt_acc);
+
+// Fetch holder name
+$account_holder = $username;
+$stmt_p = mysqli_prepare($conn, "SELECT name FROM `persnol` WHERE `account_id` = ?");
+mysqli_stmt_bind_param($stmt_p, "i", $id);
+mysqli_stmt_execute($stmt_p);
+$res_p = mysqli_stmt_get_result($stmt_p);
+if ($row_p = mysqli_fetch_assoc($res_p)) {
+    $account_holder = $row_p['name'];
+}
+mysqli_stmt_close($stmt_p);
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link rel="icon" type="image/png" href="pic/logo.png">
-    <link rel="shortcut icon" href="pic/logo.png" type="image/png">
+    <link rel="icon" type="image/png" href="assets/images/logo.png">
+    <link rel="shortcut icon" href="assets/images/logo.png" type="image/png">
     <link href='https://unpkg.com/boxicons@2.1.1/css/boxicons.min.css' rel='stylesheet'>
-    <link rel="stylesheet" href="style/card_demo.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="style/side_nav.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="assets/css/card_demo.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="assets/css/side_nav.css?v=<?php echo time(); ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3D Card Demo - NNP Bank</title>
     <style>
@@ -27,7 +50,7 @@
             margin-bottom: 40px;
         }
         .card {
-            background: url('pic/bg6.jpg') center/cover !important;
+            background: url('assets/images/bg6.jpg') center/cover !important;
             position: relative;
             width: 450px;
             height: 250px;
@@ -48,7 +71,6 @@
             background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
             z-index: 1;
         }
-        
         .card-chip-row { display: flex; justify-content: space-between; position: relative; z-index: 2; width: 100%; }
         .chip-lg { height: 45px; }
         .visa-lg { height: 28px; filter: brightness(0) invert(1); }
@@ -60,81 +82,54 @@
     </style>
 </head>
 <body>
-    <?php include "templets/side_nav.php"; ?>
-
-    <?php
-        if($_SESSION['login'] == true){
-            
-            #to store account_number
-            $store_account_number = "SELECT * FROM `account_details` WHERE `account_id` = '$id';";
-            $result_account_number = mysqli_query($conn, $store_account_number);
-            $account_number_row = mysqli_num_rows($result_account_number);
-
-            if($account_number_row == 1){
-                while($row = mysqli_fetch_assoc($result_account_number)){
-                    $account_number = $row['account_number'];
-                }
-            }
-
-            #to store account_holder_name 
-            $store_account_holder = "SELECT * FROM `persnol` WHERE `account_id` = '$id';";
-            $result_account_holder = mysqli_query($conn, $store_account_holder);
-            $account_holder_row = mysqli_num_rows($result_account_holder);
-
-            if($account_holder_row == 1){
-                while($row = mysqli_fetch_assoc($result_account_holder)){
-                    $account_holder = $row['name'];
-                }
-            }
-        }
-    ?>
+    <?php include "includes/sidebar.php"; ?>
 
     <div class="card-wrapper">
         <div class="card">
             <div class="card-chip-row">
-                <img src="pic/chip.png" class="chip-lg">
-                <img src="pic/visa.png" class="visa-lg">
+                <img src="assets/images/chip.png" class="chip-lg" alt="Chip">
+                <img src="assets/images/visa.png" class="visa-lg" alt="Visa">
             </div>
-            <div class="card-number"><?php echo htmlspecialchars($account_number ?? ''); ?></div>
-            <div class="card-name"><?php echo ucwords(htmlspecialchars($account_holder ?? '')); ?></div>
+            <div class="card-number"><?php echo htmlspecialchars($account_number); ?></div>
+            <div class="card-name"><?php echo ucwords(htmlspecialchars($account_holder)); ?></div>
             <div class="card-footer">
-                <div class="amt-display">Valid<br>12/25</div>
-                <img src="pic/logo.png" class="bank-logo">
+                <div class="amt-display">Valid<br>12/28</div>
+                <img src="assets/images/logo.png" class="bank-logo" alt="Bank Logo">
             </div>
         </div>
     </div>
 
     <a href="index.php">
-        <button id="back">Back</button>
+        <button id="back">Back to Dashboard</button>
     </a>
 
     <script>
         const card = document.querySelector('.card');
-        
-        card.addEventListener('mouseenter', () => {
-            card.style.transition = 'transform 0.1s ease-out';
-        });
+        if (card) {
+            card.addEventListener('mouseenter', () => {
+                card.style.transition = 'transform 0.1s ease-out';
+            });
 
-        card.addEventListener('mousemove', (e) => {
-            const rect = card.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                const maxRotate = 15;
+                
+                const rotateY = -((x - centerX) / centerX) * maxRotate;
+                const rotateX = ((y - centerY) / centerY) * maxRotate;
+                
+                card.style.transform = `scale(1.05) translateY(-10px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            });
             
-            const centerX = rect.width / 2;
-            const centerY = rect.height / 2;
-            
-            const maxRotate = 15;
-            
-            const rotateY = -((x - centerX) / centerX) * maxRotate;
-            const rotateX = ((y - centerY) / centerY) * maxRotate;
-            
-            card.style.transform = `scale(1.05) translateY(-10px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
-        });
-        
-        card.addEventListener('mouseleave', () => {
-            card.style.transition = 'transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-            card.style.transform = `scale(1) translateY(0px) rotateX(0deg) rotateY(0deg)`;
-        });
+            card.addEventListener('mouseleave', () => {
+                card.style.transition = 'transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                card.style.transform = `scale(1) translateY(0px) rotateX(0deg) rotateY(0deg)`;
+            });
+        }
     </script>
 </body>
 </html>

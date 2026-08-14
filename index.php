@@ -1,110 +1,119 @@
 <?php
-include "templets/internet_connection.php";
-check_internat();
+/**
+ * Dashboard & Account Overview
+ * NNP Online Banking System
+ */
+require_once __DIR__ . "/config/internet_check.php";
+check_internet();
+
 session_start();
-include "templets/_dbconnect.php";
-// include "email/test.php";
+require_once __DIR__ . "/config/db.php";
+require_once __DIR__ . "/includes/functions.php";
 
-if (!isset($_SESSION['login'])) {
-    header("location: login.php");
+// Authentication Guard
+if (!isset($_SESSION['login']) || $_SESSION['login'] !== true) {
+    header("Location: auth/login.php");
     exit();
-} else {
-    $id = $_SESSION['id'];
-    $username = $_SESSION['username'];
-}
-?>
-
-<?php
-# Toast notification function
-function error_display($error, $color = "red"){
-    $bg_color = ($color == "green" || $color == "#16a34a" || $color == "#10b981") ? "#16a34a" : (($color == "red" || $color == "#e11d48") ? "#e11d48" : $color);
-    $icon = ($bg_color == "#16a34a") ? "bx-check-circle" : "bx-error";
-    echo '<div style="background-color: '.$bg_color.';" class="error_noti">
-        <i class="bx '.$icon.'"></i>
-        <span>
-            '.$error.'
-        </span>
-        <i class="bx bx-x icon2" onclick="this.parentElement.remove();"></i>
-    </div>';
 }
 
-# Order debit card handler
-if(isset($_POST['order_done'])){
-    $amount_find = "SELECT * FROM `money_bank` WHERE `account_id` = '$id';";
-    $result_amount = mysqli_query($conn, $amount_find);
-    $row_amount = mysqli_num_rows($result_amount);
+$id = $_SESSION['id'];
+$username = $_SESSION['username'];
+$error_msg = "";
+$error_color = "red";
 
-    if ($row_amount > 0) {
-        while ($row = mysqli_fetch_assoc($result_amount)) {
-            if($row['amount'] > 399){
-                $last_amount = $row['amount'] - 399;
-                $cut_money = "UPDATE `money_bank` SET `amount`='$last_amount', `debit_card`=1 WHERE `account_id` = '$id';";
-                $result_cut_money = mysqli_query($conn, $cut_money);
+// Handle Debit Card Order Request
+if (isset($_POST['order_done'])) {
+    $stmt = mysqli_prepare($conn, "SELECT amount FROM `money_bank` WHERE `account_id` = ?");
+    mysqli_stmt_bind_param($stmt, "i", $id);
+    mysqli_stmt_execute($stmt);
+    $res = mysqli_stmt_get_result($stmt);
 
-                // mail_sender($_SESSION["email"], "Purchase Card", "Thank You for Purchase our debit card");
+    if ($row = mysqli_fetch_assoc($res)) {
+        if ($row['amount'] >= 399) {
+            $new_bal = $row['amount'] - 399;
+            
+            // Deduct balance and activate debit card
+            $update_stmt = mysqli_prepare($conn, "UPDATE `money_bank` SET `amount` = ?, `debit_card` = 1 WHERE `account_id` = ?");
+            mysqli_stmt_bind_param($update_stmt, "di", $new_bal, $id);
+            mysqli_stmt_execute($update_stmt);
+            mysqli_stmt_close($update_stmt);
 
-                $date = date('Y-m-d H:i:s');
-                $entery = "INSERT INTO `history`(`account_id`, `paymant_status`, `desc`, `time`, `amount`) VALUES ('$id','Debited','Purchase Debit card','$date',399);";
-                $result_entery = mysqli_query($conn, $entery);
-                $error = "Debit Card Ordered Successfully!";
-                error_display($error, "green");
-            }
-            else{
-                $error = "Insufficient funds in your account";
-                error_display($error);
-            }
+            // Record transaction history
+            $trans_desc = "Purchase VISA Platinum Debit Card";
+            $status = "Debited";
+            $card_cost = 399;
+            $hist_stmt = mysqli_prepare($conn, "INSERT INTO `history` (`account_id`, `paymant_status`, `desc`, `time`, `amount`) VALUES (?, ?, ?, NOW(), ?)");
+            mysqli_stmt_bind_param($hist_stmt, "issd", $id, $status, $trans_desc, $card_cost);
+            mysqli_stmt_execute($hist_stmt);
+            mysqli_stmt_close($hist_stmt);
+
+            $error_msg = "Debit Card Ordered & Activated Successfully!";
+            $error_color = "green";
+        } else {
+            $error_msg = "Insufficient funds in your account to order a debit card (₹399 required).";
+            $error_color = "red";
         }
     }
+    mysqli_stmt_close($stmt);
 }
 
-# Fetch total amount
-$total_amount = 0;
+// Fetch current account balance & debit card status
+$total_amount = 0.0;
 $debit_card_status = 0;
-$amount_find = "SELECT * FROM `money_bank` WHERE `account_id` = '$id';";
-$result_amount = mysqli_query($conn, $amount_find);
-if ($result_amount && mysqli_num_rows($result_amount) > 0) {
-    $row = mysqli_fetch_assoc($result_amount);
-    $total_amount = $row['amount'];
-    $debit_card_status = $row['debit_card'] ?? 0;
+$stmt_mb = mysqli_prepare($conn, "SELECT amount, debit_card FROM `money_bank` WHERE `account_id` = ?");
+mysqli_stmt_bind_param($stmt_mb, "i", $id);
+mysqli_stmt_execute($stmt_mb);
+$res_mb = mysqli_stmt_get_result($stmt_mb);
+if ($row_mb = mysqli_fetch_assoc($res_mb)) {
+    $total_amount = (float)$row_mb['amount'];
+    $debit_card_status = (int)($row_mb['debit_card'] ?? 0);
 }
+mysqli_stmt_close($stmt_mb);
 
-# Fetch account number
+// Fetch account details
 $account_number = "XXXX XXXX XXXX XXXX";
-$store_account_number = "SELECT * FROM `account_details` WHERE `account_id` = '$id';";
-$result_account_number = mysqli_query($conn, $store_account_number);
-if ($result_account_number && mysqli_num_rows($result_account_number) > 0) {
-    $row = mysqli_fetch_assoc($result_account_number);
-    $account_number = $row['account_number'];
+$stmt_acc = mysqli_prepare($conn, "SELECT account_number FROM `account_details` WHERE `account_id` = ?");
+mysqli_stmt_bind_param($stmt_acc, "i", $id);
+mysqli_stmt_execute($stmt_acc);
+$res_acc = mysqli_stmt_get_result($stmt_acc);
+if ($row_acc = mysqli_fetch_assoc($res_acc)) {
+    $account_number = $row_acc['account_number'];
 }
+mysqli_stmt_close($stmt_acc);
 
-# Fetch personal details
+// Fetch personal info
 $holder_name = $username;
-$holder_email = "";
-$sql = "SELECT * FROM `persnol` WHERE `account_id` = '$id';";
-$sql_result = mysqli_query($conn, $sql);
-if ($sql_result && mysqli_num_rows($sql_result) > 0) {
-    $row = mysqli_fetch_assoc($sql_result);
-    $holder_name = $row['name'];
-    $holder_email = $row['email'];
+$holder_email = $_SESSION['email'] ?? "";
+$stmt_p = mysqli_prepare($conn, "SELECT name, email FROM `persnol` WHERE `account_id` = ?");
+mysqli_stmt_bind_param($stmt_p, "i", $id);
+mysqli_stmt_execute($stmt_p);
+$res_p = mysqli_stmt_get_result($stmt_p);
+if ($row_p = mysqli_fetch_assoc($res_p)) {
+    $holder_name = $row_p['name'];
+    $holder_email = $row_p['email'];
 }
+mysqli_stmt_close($stmt_p);
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <link rel="icon" type="image/png" href="pic/logo.png">
-    <link rel="shortcut icon" href="pic/logo.png" type="image/png">
+    <link rel="icon" type="image/png" href="assets/images/logo.png">
+    <link rel="shortcut icon" href="assets/images/logo.png" type="image/png">
     <link href='https://unpkg.com/boxicons@2.1.1/css/boxicons.min.css' rel='stylesheet'>
-    <link rel="stylesheet" href="style/side_nav.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="style/index.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="assets/css/side_nav.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="assets/css/index.css?v=<?php echo time(); ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - NNP Bank</title>
 </head>
-
 <body>
-    <?php include "templets/side_nav.php"; ?>
+    <?php include "includes/sidebar.php"; ?>
+
+    <?php
+        if (!empty($error_msg)) {
+            error_display($error_msg, $error_color);
+        }
+    ?>
 
     <div class="dashboard-container">
         
@@ -116,24 +125,24 @@ if ($sql_result && mysqli_num_rows($sql_result) > 0) {
                     <span class="date">
                         <?php echo date('D, M d'); ?>
                     </span>
-                    <img src="pic/symbol-removebg-preview.png" id="symbol" alt="Network">
+                    <img src="assets/images/symbol-removebg-preview.png" id="symbol" alt="Network">
                 </div>
 
                 <!-- Mini Card inside Phone -->
                 <div class="card">
                     <div class="first_line">
                         <span id="bank_name">NNP Bank</span>
-                        <img src="pic/visa.png" id="visa" alt="Visa">
+                        <img src="assets/images/visa.png" id="visa" alt="Visa">
                     </div>
 
                     <div class="amount_details">
                         Balance
-                        <div>&#8377;<span id="total_amount"><?php echo number_format((float)$total_amount, 2); ?></span></div>
+                        <div>&#8377;<span id="total_amount"><?php echo format_inr($total_amount); ?></span></div>
                     </div>
 
                     <div class="last_line">
                         <span id="user_name"><?php echo htmlspecialchars($username); ?></span>
-                        <img src="pic/chip.png" id="chip" alt="Chip">
+                        <img src="assets/images/chip.png" id="chip" alt="Chip">
                     </div>
                 </div>
 
@@ -144,8 +153,10 @@ if ($sql_result && mysqli_num_rows($sql_result) > 0) {
 
                 <div class="history">
                     <?php
-                    $history_sql = "SELECT * FROM `history` WHERE `account_id` = '$id' ORDER BY time DESC LIMIT 6;";
-                    $result_history = mysqli_query($conn, $history_sql);
+                    $hist_stmt = mysqli_prepare($conn, "SELECT paymant_status, `desc`, time, amount FROM `history` WHERE `account_id` = ? ORDER BY time DESC LIMIT 6");
+                    mysqli_stmt_bind_param($hist_stmt, "i", $id);
+                    mysqli_stmt_execute($hist_stmt);
+                    $result_history = mysqli_stmt_get_result($hist_stmt);
 
                     if ($result_history && mysqli_num_rows($result_history) > 0) {
                         while ($row = mysqli_fetch_assoc($result_history)) {
@@ -156,16 +167,17 @@ if ($sql_result && mysqli_num_rows($sql_result) > 0) {
                             echo '
                                 <div class="history_line">
                                     <div class="history_left">
-                                        <img src="pic/success.png" id="suc" alt="Status">
+                                        <img src="assets/images/success.png" id="suc" alt="Status">
                                         <span id="payment_status">' . htmlspecialchars($row['paymant_status']) . '</span>
                                     </div>
-                                    <span id="amount" style="color: ' . $color . ';">' . $sign . ' &#8377;' . number_format((float)$row['amount'], 2) . '</span>
+                                    <span id="amount" style="color: ' . $color . ';">' . $sign . ' &#8377;' . format_inr($row['amount']) . '</span>
                                 </div>                            
                             ';
                         }
                     } else {
                         echo '<div style="color: #64748b; text-align: center; font-size: 13px; margin-top: 30px;">No recent transactions</div>';
                     }
+                    mysqli_stmt_close($hist_stmt);
                     ?>
                 </div>
 
@@ -186,7 +198,7 @@ if ($sql_result && mysqli_num_rows($sql_result) > 0) {
                 <div class="user-quick-stats">
                     <div class="quick-stat-badge">
                         <span class="quick-stat-label">Available Balance</span>
-                        <span class="quick-stat-val" style="color: #10b981;">&#8377;<?php echo number_format((float)$total_amount, 2); ?></span>
+                        <span class="quick-stat-val" style="color: #10b981;">&#8377;<?php echo format_inr($total_amount); ?></span>
                     </div>
                     <div class="quick-stat-badge">
                         <span class="quick-stat-label">Account Status</span>
@@ -201,13 +213,13 @@ if ($sql_result && mysqli_num_rows($sql_result) > 0) {
                 <!-- Physical ATM Card Preview -->
                 <div class="card2">
                     <div class="pic_line">
-                        <img class="pic" src="pic/chip.png" alt="Chip">
-                        <img src="pic/visa.png" alt="Visa">
+                        <img class="pic" src="assets/images/chip.png" alt="Chip">
+                        <img src="assets/images/visa.png" alt="Visa">
                     </div>
 
                     <div class="number_line">
                         <p id="number"><?php echo htmlspecialchars($account_number); ?></p>
-                        <img class="wifi-icon" src="pic/wifi.png" alt="NFC">
+                        <img class="wifi-icon" src="assets/images/wifi.png" alt="NFC">
                     </div>
 
                     <div class="name_line">
@@ -219,7 +231,7 @@ if ($sql_result && mysqli_num_rows($sql_result) > 0) {
                             <div>Valid Thru</div>
                             <span>12/28</span>
                         </div>
-                        <img src="pic/logo.png" class="logo" alt="Bank Logo">
+                        <img src="assets/images/logo.png" class="logo" alt="Bank Logo">
                     </div>
                 </div>
 
@@ -227,7 +239,7 @@ if ($sql_result && mysqli_num_rows($sql_result) > 0) {
                 <div class="order-info-col">
                     <?php if ($debit_card_status == 1): ?>
                         <div class="already-ordered-box">
-                            <img src="pic/success.png" alt="Success">
+                            <img src="assets/images/success.png" alt="Success">
                             <div class="already-text">
                                 <h3>Debit Card Active</h3>
                                 <p>Your contactless VISA Platinum Debit Card is currently active and linked to your account.</p>
@@ -268,5 +280,4 @@ if ($sql_result && mysqli_num_rows($sql_result) > 0) {
 
     </div>
 </body>
-
 </html>

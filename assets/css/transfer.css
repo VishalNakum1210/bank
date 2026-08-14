@@ -1,0 +1,362 @@
+@import url('https://fonts.googleapis.com/css2?family=Inclusive+Sans:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Plus Jakarta Sans", "Inclusive Sans", sans-serif;
+}
+
+body {
+    background-color: #18191a;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-left: 88px;
+    box-sizing: border-box;
+}
+
+/* Main Outer White Container Card */
+.card1 {
+    width: 980px;
+    max-width: calc(100vw - 120px);
+    min-height: 520px;
+    background-color: #ffffff;
+    border-radius: 28px;
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.45), 0 10px 20px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 50px 55px;
+    gap: 50px;
+    position: relative;
+}
+
+/* Card Column / Wrapper */
+.card-column {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* ATM Physical Card inside White Card with Realistic Pop-Out Box Shadow */
+.card2 {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 260px;
+    width: 420px;
+    max-width: 100%;
+    color: #ffffff;
+    background: url('../images/bg6.jpg') center/cover, #111111 !important;
+    border-radius: 22px;
+    padding: 28px;
+    box-sizing: border-box;
+    overflow: hidden;
+    z-index: 2;
+    /* Static High-Depth 3D Box Shadow (Feels like coming out of screen) */
+    box-shadow: 
+        0 25px 50px -10px rgba(0, 0, 0, 0.65),
+        0 35px 75px -15px rgba(0, 0, 0, 0.45),
+        0 10px 20px -5px rgba(0, 0, 0, 0.3),
+        inset 0 1px 2px rgba(255, 255, 255, 0.35),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.card2::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.04) 40%, rgba(0, 0, 0, 0.25) 100%);
+    pointer-events: none;
+    border-radius: 22px;
+}
+
+/* Card Interior Elements */
+.card-chip-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+}
+
+.chip-lg {
+    height: 42px;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+.visa-lg {
+    height: 28px;
+    filter: brightness(0) invert(1) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+.card-number {
+    font-family: 'Courier New', Courier, monospace, "Inclusive Sans", sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9), 0 0 2px rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+    margin: 8px 0;
+}
+
+.card-name {
+    font-size: 16px;
+    font-weight: 600;
+    text-transform: uppercase;
+    position: relative;
+    z-index: 2;
+    letter-spacing: 2px;
+    color: #f1f5f9;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+    margin: 0;
+}
+
+.card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    position: relative;
+    z-index: 2;
+    color: #ffffff;
+    margin: 0;
+}
+
+.bank-logo {
+    height: 46px;
+    filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.5));
+}
+
+.amt-display {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    line-height: 1.4;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+    letter-spacing: 0.5px;
+}
+
+/* Right Section - Form Panel inside White Card */
+.input_line {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: static;
+    top: auto;
+    left: auto;
+    width: auto;
+    height: auto;
+    background-color: transparent;
+    padding-left: 10px;
+}
+
+.title_line {
+    display: flex;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.title_line p {
+    font-size: 28px;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.5px;
+}
+
+.line1 {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 18px;
+    width: 100%;
+}
+
+.line1 span {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.text {
+    font-size: 13px;
+    font-weight: 700;
+    color: #64748b;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+input {
+    height: 42px;
+    width: 100%;
+    border: 0;
+    border-bottom: 2.5px solid #cbd5e1;
+    font-size: 16px;
+    font-weight: 600;
+    color: #0f172a;
+    outline: none;
+    background: transparent;
+    transition: all 0.25s ease;
+    padding: 4px 0;
+}
+
+input:focus {
+    border-bottom-color: #0f172a;
+    padding-left: 4px;
+}
+
+input::placeholder {
+    color: #94a3b8;
+    font-weight: 400;
+}
+
+/* Button Row */
+.btn-group {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 15px;
+}
+
+#sub {
+    position: static;
+    top: auto;
+    left: auto;
+    height: 44px;
+    min-width: 120px;
+    padding: 0 24px;
+    font-size: 15px;
+    font-weight: 700;
+    border: 2px solid #0f172a;
+    border-radius: 12px;
+    background-color: #0f172a;
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
+}
+
+#sub:hover {
+    background-color: #1e293b;
+    border-color: #1e293b;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.35);
+}
+
+#back {
+    position: static;
+    top: auto;
+    left: auto;
+    height: 44px;
+    min-width: 95px;
+    padding: 0 20px;
+    font-size: 15px;
+    font-weight: 700;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    background-color: #f8fafc;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#back:hover {
+    background-color: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #0f172a;
+}
+
+.back_link {
+    text-decoration: none;
+    display: inline-block;
+}
+
+/* Toast/Error Notification */
+.error_noti {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    min-width: 320px;
+    max-width: 450px;
+    padding: 14px 20px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 600;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    z-index: 99999;
+    animation: toastSlideIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.error_noti i.bx-error,
+.error_noti i.bx-check-circle {
+    font-size: 22px;
+    flex-shrink: 0;
+}
+
+.error_noti span {
+    flex-grow: 1;
+    line-height: 1.4;
+}
+
+.error_noti .icon2 {
+    font-size: 20px;
+    cursor: pointer;
+    opacity: 0.85;
+    transition: opacity 0.2s, transform 0.2s;
+    flex-shrink: 0;
+    margin-left: 8px;
+}
+
+.error_noti .icon2:hover {
+    opacity: 1;
+    transform: scale(1.15);
+}
+
+@keyframes toastSlideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive Media Queries */
+@media screen and (max-width: 950px) {
+    .card1 {
+        flex-direction: column;
+        width: 100%;
+        max-width: 480px;
+        padding: 35px 25px;
+        gap: 35px;
+    }
+    
+    .card2 {
+        width: 100%;
+    }
+    
+    .input_line {
+        width: 100%;
+        padding-left: 0;
+    }
+}
