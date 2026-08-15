@@ -1,9 +1,12 @@
 # 🏦 NNP Online Banking System
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-nnpbank.infinityfreeapp.com-2ea44f?style=for-the-badge&logo=googlechrome&logoColor=white)](https://nnpbank.infinityfreeapp.com/)
 [![PHP Version](https://img.shields.io/badge/PHP-8.x%20%7C%207.4+-777BB4?style=for-the-badge&logo=php&logoColor=white)](https://www.php.net/)
 [![MySQL](https://img.shields.io/badge/MySQL-5.7%2B%20%7C%208.0%2B-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
 [![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 [![CSS3](https://img.shields.io/badge/CSS3-Modern%20UI-1572B6?style=for-the-badge&logo=css3&logoColor=white)](https://www.w3.org/Style/CSS/)
+
+🔗 **Live Demo**: [https://nnpbank.infinityfreeapp.com/](https://nnpbank.infinityfreeapp.com/)
 
 **NNP Online Banking** is a responsive, feature-rich web-based banking portal built with **PHP** and **MySQL**. It features an immersive dark-theme interface, an interactive mobile phone app simulator, interactive 3D holographic debit cards, real-time peer-to-peer transfers, deposit/withdrawal facilities, and a modular authentication system.
 
@@ -43,6 +46,56 @@
 
 ---
 
+# 📸 Screenshots
+
+## 🏠 Dashboard
+
+The dashboard provides a complete overview of the user's bank account, including balance, account status, debit card status, and recent transactions.
+
+![NNP Bank Dashboard](screenshots/dashboard.png)
+
+---
+
+## 💳 3D Interactive Debit Card Demo
+
+The project includes a dedicated interactive VISA Platinum Debit Card demonstration featuring real-time 3D tilt effects, metallic chip, and cardholder details.
+
+![Interactive Debit Card](screenshots/card-demo.png)
+
+---
+
+## 💸 Withdraw Money
+
+The withdrawal page allows users to enter the withdrawal amount and verify the transaction using their 4-digit security PIN.
+
+![Withdraw Money](screenshots/withdraw.png)
+
+---
+
+## 💰 Add Money
+
+The Add Money page allows users to deposit funds into their bank account.
+
+![Add Money](screenshots/add-money.png)
+
+---
+
+## 📊 Transaction History
+
+The transaction history page displays all account debits and credits with their status, description, date, time, and amount.
+
+![Transaction History](screenshots/transaction-history.png)
+
+---
+
+## 🔄 Transfer Money
+
+The transfer page allows users to send money to another registered user using their username, email, and transfer amount.
+
+![Transfer Money](screenshots/transfer.png)
+
+---
+
 ## 📂 Project Structure
 
 ```
@@ -64,6 +117,7 @@ bank/
     │   ├── functions.php              # Shared helper functions
     │   ├── mailer.php                 # Email helper
     │   └── sidebar.php                # Sidebar navigation
+    ├── screenshots/                   # Project preview screenshots
     ├── add_money.php                  # Add funds page
     ├── card_demo.php                  # 3D debit card showcase
     ├── index.php                      # Main dashboard & phone simulator
